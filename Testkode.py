@@ -7,6 +7,9 @@ Created on Mon Nov 11 10:52:52 2024
 import numpy as np
 import matplotlib.pyplot as plt
 
+#hahaha
+
+
 # Be om brukerinput
 x = float(input("Skriv inn x-koordinaten for vektor A: "))
 y = float(input("Skriv inn y-koordinaten for vektor A: "))
