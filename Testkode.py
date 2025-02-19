@@ -12,7 +12,7 @@ Created on Mon Nov 11 10:52:52 2024
 import numpy as np
 import matplotlib.pyplot as plt
 
-#hahaha
+#hahaha_hehehohohoooo
 
 
 # Be om brukerinput
