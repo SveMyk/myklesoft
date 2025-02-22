@@ -1,21 +1,24 @@
-# 1️⃣ Oppdater og installer nødvendige pakker
+# 1. Oppdater og installer nødvendige pakker
 sudo apt update
 sudo apt install -y hostapd dnsmasq
 
-# 2️⃣ Deaktiver DHCP for WiFi
-sudo systemctl stop dhcpcd
-sudo systemctl disable dhcpcd
+# 2. Sett opp en statisk IP for wlan0
+sudo tee /etc/network/interfaces.d/wlan0 > /dev/null <<EOL
+auto wlan0
+iface wlan0 inet static
+    address 192.168.4.1
+    netmask 255.255.255.0
+    network 192.168.4.0
+    broadcast 192.168.4.255
+EOL
 
-# 3️⃣ Sett opp statisk IP for wlan0
-echo -e "\ninterface wlan0\nstatic ip_address=192.168.4.1/24" | sudo tee -a /etc/dhcpcd.conf
-
-# 4️⃣ Konfigurer DHCP-serveren (dnsmasq)
+# 3. Konfigurer DHCP-server (dnsmasq)
 sudo tee /etc/dnsmasq.conf > /dev/null <<EOL
 interface=wlan0
 dhcp-range=192.168.4.2,192.168.4.20,255.255.255.0,24h
 EOL
 
-# 5️⃣ Konfigurer WiFi-hotspot (hostapd)
+# 4. Sett opp WiFi-hotspot (hostapd)
 sudo tee /etc/hostapd/hostapd.conf > /dev/null <<EOL
 interface=wlan0
 driver=nl80211
@@ -32,14 +35,13 @@ wpa_key_mgmt=WPA-PSK
 rsn_pairwise=CCMP
 EOL
 
-# 6️⃣ Koble hostapd til konfigurasjonen
+# 5. Koble hostapd til riktig konfigurasjonsfil
 sudo sed -i 's|#DAEMON_CONF=""|DAEMON_CONF="/etc/hostapd/hostapd.conf"|' /etc/default/hostapd
 
-# 7️⃣ Aktiver og start tjenestene
+# 6. Start og aktiver nødvendige tjenester
 sudo systemctl unmask hostapd
-sudo systemctl enable hostapd
-sudo systemctl restart hostapd
-sudo systemctl restart dnsmasq
+sudo systemctl enable hostapd dnsmasq
+sudo systemctl restart hostapd dnsmasq
 
-# 8️⃣ Start Raspberry Pi på nytt
+# 7. Reboot for å aktivere hotspot
 sudo reboot
