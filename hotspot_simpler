@@ -1,0 +1,34 @@
+Åpne en terminal og kjør:
+
+sh
+sudo apt update
+sudo apt install hostapd dnsmasq
+sudo apt install create_ap -y
+
+sh
+sudo create_ap wlan0 eth0 GASSO robotino123
+🔹 wlan0 = WiFi-adapteret du vil bruke til hotspot
+🔹 eth0 = Nettverksgrensesnitt som gir internettdeling (kan fjernes om du ikke trenger internett på hotspotet)
+🔹 GASSO = SSID/navn på nettverket
+🔹 robotino123 = Passord
+
+Hvis du vil at hotspotet skal starte automatisk, bruk denne kommandoen:
+
+sh
+Kopier
+Rediger
+sudo nano /etc/rc.local
+Legg til denne linjen rett før exit 0:
+
+sh
+Kopier
+Rediger
+create_ap wlan0 eth0 GASSO robotino123 &
+Lagre med CTRL + X, Y, og Enter.
+
+Deretter start Pi-en på nytt:
+
+sh
+Kopier
+Rediger
+sudo reboot
