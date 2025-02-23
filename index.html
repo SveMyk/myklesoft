@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GASSO Kontroll</title>
+</head>
+<body>
+    <h1>Velkommen til GASSO</h1>
+    <button onclick="sendCommand('xX+1')">Forover</button>
+    <button onclick="sendCommand('xX-1')">Bakover</button>
+    <button onclick="sendCommand('xY+1')">Venstre</button>
+    <button onclick="sendCommand('xY-1')">Høyre</button>
+    <button onclick="sendCommand('xCW')">Rotér CW</button>
+    <button onclick="sendCommand('xCCW')">Rotér CCW</button>
+    <button onclick="sendCommand('xSTOP')">Stopp</button>
+
+    <script>
+        function sendCommand(command) {
+            fetch('/control?cmd=' + command)
+                .then(response => response.text())
+                .then(data => console.log(data));
+        }
+    </script>
+</body>
+</html>
