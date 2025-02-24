@@ -1,0 +1,102 @@
+// Definer motorpinner
+const int motor1_IN1 = 9;
+const int motor1_IN2 = 10;
+const int motor2_IN1 = 11;
+const int motor2_IN2 = 12;
+const int motor3_IN1 = 7;
+const int motor3_IN2 = 8;
+const int motor1_PWM = 5;
+const int motor2_PWM = 6;
+const int motor3_PWM = 3;
+
+// Variabler
+const int pwmMax = 255; // Maksimal PWM
+const float pwmHastighet = 0.4 * pwmMax; // Standard hastighet (40%)
+String kommando = ""; // Mottatt kommando via Serial
+
+void setup() {
+  // Sett opp pinner som utganger
+  pinMode(motor1_IN1, OUTPUT);
+  pinMode(motor1_IN2, OUTPUT);
+  pinMode(motor2_IN1, OUTPUT);
+  pinMode(motor2_IN2, OUTPUT);
+  pinMode(motor3_IN1, OUTPUT);
+  pinMode(motor3_IN2, OUTPUT);
+  pinMode(motor1_PWM, OUTPUT);
+  pinMode(motor2_PWM, OUTPUT);
+  pinMode(motor3_PWM, OUTPUT);
+
+  // Start seriell kommunikasjon
+  Serial.begin(115200);
+}
+
+void loop() {
+  if (Serial.available()) {
+    kommando = Serial.readStringUntil('\n');  // Leser kommando frem til linjeskift
+    kommando.trim();  // Fjerner eventuelle mellomrom
+
+    Serial.println("Mottatt kommando: " + kommando);
+
+    if (kommando == "X+1") {
+      settHastighet(1, 0, 0);
+    } else if (kommando == "X-1") {
+      settHastighet(-1, 0, 0);
+    } else if (kommando == "Y+1") {
+      settHastighet(0, 1, 0);
+    } else if (kommando == "Y-1") {
+      settHastighet(0, -1, 0);
+    } else if (kommando == "CW") {
+      settHastighet(0, 0, 1);
+    } else if (kommando == "CCW") {
+      settHastighet(0, 0, -1);
+    } else if (kommando == "STOP") {
+      stoppMotorer();
+    }
+  }
+}
+
+// Funksjon for å sette hastighet
+void settHastighet(float vx, float vy, float omega) {
+  const float theta1 = 0;
+  const float theta2 = 120 * (PI / 180);
+  const float theta3 = 240 * (PI / 180);
+  const float r = 1.0;
+
+  float v1 = vx * sin(theta1) - vy * cos(theta1) - omega * r;
+  float v2 = vx * sin(theta2) - vy * cos(theta2) - omega * r;
+  float v3 = vx * sin(theta3) - vy * cos(theta3) - omega * r;
+
+  float maxV = max(max(abs(v1), abs(v2)), abs(v3));
+  if (maxV > 1) {
+    v1 /= maxV;
+    v2 /= maxV;
+    v3 /= maxV;
+  }
+
+  settMotorHastighet(motor1_IN1, motor1_IN2, motor1_PWM, v1 * pwmHastighet);
+  settMotorHastighet(motor2_IN1, motor2_IN2, motor2_PWM, v2 * pwmHastighet);
+  settMotorHastighet(motor3_IN1, motor3_IN2, motor3_PWM, v3 * pwmHastighet);
+}
+
+// Funksjon for å styre en motor
+void settMotorHastighet(int in1, int in2, int pwm, float hastighet) {
+  if (hastighet > 0) {
+    digitalWrite(in1, HIGH);
+    digitalWrite(in2, LOW);
+  } else if (hastighet < 0) {
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, HIGH);
+    hastighet = -hastighet;
+  } else {
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, LOW);
+  }
+  analogWrite(pwm, (int)hastighet);
+}
+
+// Funksjon for å stoppe alle motorer
+void stoppMotorer() {
+  settMotorHastighet(motor1_IN1, motor1_IN2, motor1_PWM, 0);
+  settMotorHastighet(motor2_IN1, motor2_IN2, motor2_PWM, 0);
+  settMotorHastighet(motor3_IN1, motor3_IN2, motor3_PWM, 0);
+}
