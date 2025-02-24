@@ -37,13 +37,13 @@ void loop() {
 
     Serial.println("Mottatt kommando: " + kommando);
 
-    if (kommando == "X+1") {
+    if (kommando == "FWD") {
       settHastighet(1, 0, 0);
-    } else if (kommando == "X-1") {
+    } else if (kommando == "BWD") {
       settHastighet(-1, 0, 0);
-    } else if (kommando == "Y+1") {
+    } else if (kommando == "LEFT") {
       settHastighet(0, 1, 0);
-    } else if (kommando == "Y-1") {
+    } else if (kommando == "RIGHT") {
       settHastighet(0, -1, 0);
     } else if (kommando == "CW") {
       settHastighet(0, 0, 1);
