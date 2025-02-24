@@ -4,22 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GASSO Kontroll</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .button-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            max-width: 300px;
+            margin: 20px auto;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+    </style>
 </head>
 <body>
     <h1>Velkommen til GASSO</h1>
-    <button onclick="sendCommand('xX+1')">Forover</button>
-    <button onclick="sendCommand('xX-1')">Bakover</button>
-    <button onclick="sendCommand('xY+1')">Venstre</button>
-    <button onclick="sendCommand('xY-1')">Høyre</button>
-    <button onclick="sendCommand('xCW')">Rotér CW</button>
-    <button onclick="sendCommand('xCCW')">Rotér CCW</button>
-    <button onclick="sendCommand('xSTOP')">Stopp</button>
+
+    <div class="button-container">
+        <button onclick="sendCommand('X+1')">Forover</button>
+        <button onclick="sendCommand('STOP')">Stopp</button>
+        <button onclick="sendCommand('X-1')">Bakover</button>
+        <button onclick="sendCommand('Y+1')">Venstre</button>
+        <button onclick="sendCommand('CW')">Rotér CW</button>
+        <button onclick="sendCommand('Y-1')">Høyre</button>
+        <button onclick="sendCommand('CCW')">Rotér CCW</button>
+    </div>
 
     <script>
         function sendCommand(command) {
             fetch('/control?cmd=' + command)
                 .then(response => response.text())
-                .then(data => console.log(data));
+                .then(data => console.log(data))
+                .catch(error => console.error('Feil ved sending av kommando:', error));
         }
     </script>
 </body>
