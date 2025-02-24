@@ -20,8 +20,8 @@
         .button-container {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            max-width: 300px;
+            gap: 10px;
+            max-width: 320px;
             margin: 20px auto;
         }
 
@@ -43,24 +43,33 @@
         button:active {
             transform: scale(0.95);
         }
+
+        .empty {
+            background: none;
+            border: none;
+            cursor: default;
+        }
     </style>
 </head>
 <body>
     <h1>Velkommen til GASSO</h1>
 
     <div class="button-container">
-        <button onclick="sendCommand('X+1')">Forover</button>
-        <button onclick="sendCommand('STOP')">Stopp</button>
-        <button onclick="sendCommand('X-1')">Bakover</button>
-        <button onclick="sendCommand('Y+1')">Venstre</button>
-        <button onclick="sendCommand('CW')">Rotér CW</button>
-        <button onclick="sendCommand('Y-1')">Høyre</button>
         <button onclick="sendCommand('CCW')">Rotér CCW</button>
+        <button onclick="sendCommand('FWD')">Forover</button>
+        <button onclick="sendCommand('CW')">Rotér CW</button>
+        <button onclick="sendCommand('LEFT')">Venstre</button>
+        <button onclick="sendCommand('STOP')">Stopp</button>
+        <button onclick="sendCommand('RIGHT')">Høyre</button>
+        <button class="empty"></button>
+        <button onclick="sendCommand('BWD')">Bakover</button>
+        <button class="empty"></button>
     </div>
 
     <script>
         function sendCommand(command) {
-            fetch('/control?cmd=' + command)
+            let encodedCommand = encodeURIComponent(command); // Sørger for at + og spesialtegn sendes riktig
+            fetch('/control?cmd=' + encodedCommand)
                 .then(response => response.text())
                 .then(data => console.log(data))
                 .catch(error => console.error('Feil ved sending av kommando:', error));
