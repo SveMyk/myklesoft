@@ -10,6 +10,9 @@ import serial
 
 app = Flask(__name__)
 
+# Sett GPIO pinne nummereringsmetode
+GPIO.setmode(GPIO.BCM)  # Eller GPIO.BOARD hvis du ønsker å bruke fysisk pinne nummerering
+
 # Sett opp seriell kommunikasjon med Arduino
 SERIAL_PORT = "/dev/ttyACM0"  # Bytt til riktig port, f.eks. "/dev/ttyAMA0" eller "/dev/ttyACM0"
 BAUD_RATE = 115200
@@ -68,3 +71,4 @@ def control():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=80)
+
