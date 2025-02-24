@@ -11,7 +11,7 @@ import serial
 app = Flask(__name__)
 
 # Sett opp seriell kommunikasjon med Arduino
-SERIAL_PORT = "/dev/ttyUSB0"  # Bytt til riktig port, f.eks. "/dev/ttyAMA0" eller "/dev/ttyACM0"
+SERIAL_PORT = "/dev/ttyACM0"  # Bytt til riktig port, f.eks. "/dev/ttyAMA0" eller "/dev/ttyACM0"
 BAUD_RATE = 115200
 
 try:
