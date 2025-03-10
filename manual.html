@@ -1,152 +1,200 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GASSO - Manuell Kontroll</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-            text-align: center;
-        }
-        header {
-            background-color: #00cfe8;
-            padding: 20px;
-        }
-        header img {
-            height: 180px;
-        }
-        .battery {
-            margin-top: 10px;
-            font-size: 1.2rem;
-            color: #003366;
-        }
-        .control-buttons {
-            margin: 30px auto;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            max-width: 500px;
-        }
-        .btn {
-            padding: 15px;
-            font-size: 1.1rem;
-            background-color: #003366;
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-        }
-        .btn:hover {
-            background-color: #005f99;
-        }
-        .sensor-data {
-            margin-top: 40px;
-            background-color: #fff;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            display: inline-block;
-        }
-        .sensor-table {
-            width: 100%;
-            margin-top: 10px;
-            font-size: 1.1rem;
-        }
-        .sensor-table td {
-            padding: 10px 20px;
-        }
-        .btn-back {
-            margin: 40px auto;
-            padding: 12px 25px;
-            font-size: 1.1rem;
-            background-color: #003366;
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-        }
-        .btn-back:hover {
-            background-color: #005f99;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GASSO - Manuell Kontroll</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+      text-align: center;
+    }
+    header {
+      background-color: #00cfe8;
+      padding: 20px;
+    }
+    header img {
+      height: 180px;
+    }
+    .battery {
+      margin-top: 10px;
+      font-size: 1.2rem;
+      color: #003366;
+    }
+    .control-buttons {
+      margin: 30px auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      max-width: 500px;
+    }
+    .btn {
+      padding: 15px;
+      font-size: 1.1rem;
+      background-color: #003366;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #005f99;
+    }
+    .sensor-bars {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 30px;
+      margin-top: 40px;
+      height: 240px;
+    }
+    .bar-container {
+      width: 50px;
+      background-color: #ddd;
+      display: flex;
+      flex-direction: column-reverse;
+      justify-content: flex-start;
+      border-radius: 5px;
+      overflow: hidden;
+      position: relative;
+    }
+    .bar-fill {
+      width: 100%;
+      transition: height 0.3s;
+    }
+    .bar-value {
+      position: absolute;
+      top: -25px;
+      width: 100%;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #000;
+    }
+    .bar-label {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    .btn-back {
+      margin: 50px auto;
+      padding: 15px 30px;
+      font-size: 1.1rem;
+      background-color: #003366;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      display: block;
+    }
+    .btn-back:hover {
+      background-color: #005f99;
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <img src="/static/gasso_logo.png" alt="GASSO Logo">
-        <div class="battery">Batteristatus: <span id="batteryLevel">Loading...</span></div>
-    </header>
+  <header>
+    <img src="/static/gasso_logo.png" alt="GASSO Logo" />
+    <div class="battery">Batteristatus: <span id="batteryLevel">Loading...</span></div>
+  </header>
 
-    <div class="control-buttons">
-        <button class="btn" onclick="sendCmd('CCW')">Rotér CCW</button>
-        <button class="btn" onclick="sendCmd('FWD')">Frem</button>
-        <button class="btn" onclick="sendCmd('CW')">Rotér CW</button>
+  <div class="control-buttons">
+    <button class="btn" onclick="sendCmd('CCW')">Rotér CCW</button>
+    <button class="btn" onclick="sendCmd('FWD')">Frem</button>
+    <button class="btn" onclick="sendCmd('CW')">Rotér CW</button>
+    <button class="btn" onclick="sendCmd('LEFT')">Venstre</button>
+    <button class="btn" onclick="sendCmd('STOP')">Stopp</button>
+    <button class="btn" onclick="sendCmd('RIGHT')">Høyre</button>
+    <div></div>
+    <button class="btn" onclick="sendCmd('BWD')">Bak</button>
+    <div></div>
+  </div>
 
-        <button class="btn" onclick="sendCmd('LEFT')">Venstre</button>
-        <button class="btn" onclick="sendCmd('STOP')">Stopp</button>
-        <button class="btn" onclick="sendCmd('RIGHT')">Høyre</button>
-
-        <div></div>
-        <button class="btn" onclick="sendCmd('BWD')">Bak</button>
-        <div></div>
+  <div class="sensor-bars">
+    <div class="bar-container">
+      <div id="barLeftValue" class="bar-value">--</div>
+      <div id="barLeft" class="bar-fill" style="height: 0%; background-color: #aaa;"></div>
+      <div class="bar-label">Venstre</div>
     </div>
-
-    <div class="sensor-data">
-        <strong>Avstandsmålinger (Ultralydsensorer):</strong>
-        <table class="sensor-table">
-            <tr>
-                <td>Venstre sensor:</td>
-                <td><span id="sensorLeft">--</span> cm</td>
-            </tr>
-            <tr>
-                <td>Midtre sensor:</td>
-                <td><span id="sensorMid">--</span> cm</td>
-            </tr>
-            <tr>
-                <td>Høyre sensor:</td>
-                <td><span id="sensorRight">--</span> cm</td>
-            </tr>
-        </table>
+    <div class="bar-container">
+      <div id="barMidValue" class="bar-value">--</div>
+      <div id="barMid" class="bar-fill" style="height: 0%; background-color: #aaa;"></div>
+      <div class="bar-label">Midt</div>
     </div>
+    <div class="bar-container">
+      <div id="barRightValue" class="bar-value">--</div>
+      <div id="barRight" class="bar-fill" style="height: 0%; background-color: #aaa;"></div>
+      <div class="bar-label">Høyre</div>
+    </div>
+  </div>
 
-    <button class="btn-back" onclick="location.href='/'">Tilbake til hovedmeny</button>
+  <button class="btn-back" onclick="location.href='/'">Tilbake til hovedmeny</button>
 
-    <script>
-        async function fetchBattery() {
-            try {
-                const response = await fetch('/battery');
-                const data = await response.json();
-                document.getElementById('batteryLevel').innerText = data.level + '%';
-            } catch (error) {
-                document.getElementById('batteryLevel').innerText = 'Ukjent';
-            }
-        }
+  <script>
+    async function fetchBattery() {
+      try {
+        const response = await fetch('/battery');
+        const data = await response.json();
+        document.getElementById('batteryLevel').innerText = data.level + '%';
+      } catch (error) {
+        document.getElementById('batteryLevel').innerText = 'Ukjent';
+      }
+    }
 
-        async function fetchSensors() {
-            try {
-                const response = await fetch('/sensors');
-                const data = await response.json();
-                document.getElementById('sensorLeft').innerText = data.left;
-                document.getElementById('sensorMid').innerText = data.mid;
-                document.getElementById('sensorRight').innerText = data.right;
-            } catch (error) {
-                document.getElementById('sensorLeft').innerText = '--';
-                document.getElementById('sensorMid').innerText = '--';
-                document.getElementById('sensorRight').innerText = '--';
-            }
-        }
+    function calculateBarColor(distance) {
+      const min = 10;
+      const max = 80;
+      const clamped = Math.max(min, Math.min(max, distance));
+      const percent = (clamped - min) / (max - min);
+      const red = Math.round(255 - (percent * 255));
+      const green = Math.round(percent * 255);
+      return `rgb(${red},${green},0)`;
+    }
 
-        function sendCmd(cmd) {
-            fetch('/control?cmd=' + cmd)
-                .then(res => console.log("Command sent:", cmd));
-        }
+    async function fetchSensors() {
+      try {
+        const response = await fetch('/sensors');
+        const data = await response.json();
 
-        fetchBattery();
-        fetchSensors();
-        setInterval(fetchSensors, 1000);
-    </script>
+        let left = Math.round(data.left);
+        let mid = Math.round(data.mid);
+        let right = Math.round(data.right);
+
+        let leftHeight = Math.min(100, (left / 80) * 100);
+        let midHeight = Math.min(100, (mid / 80) * 100);
+        let rightHeight = Math.min(100, (right / 80) * 100);
+
+        document.getElementById('barLeft').style.height = leftHeight + '%';
+        document.getElementById('barLeft').style.backgroundColor = calculateBarColor(left);
+        document.getElementById('barLeftValue').innerText = left + ' cm';
+
+        document.getElementById('barMid').style.height = midHeight + '%';
+        document.getElementById('barMid').style.backgroundColor = calculateBarColor(mid);
+        document.getElementById('barMidValue').innerText = mid + ' cm';
+
+        document.getElementById('barRight').style.height = rightHeight + '%';
+        document.getElementById('barRight').style.backgroundColor = calculateBarColor(right);
+        document.getElementById('barRightValue').innerText = right + ' cm';
+
+      } catch (error) {
+        document.getElementById('barLeft').style.height = '0%';
+        document.getElementById('barLeftValue').innerText = '--';
+        document.getElementById('barMid').style.height = '0%';
+        document.getElementById('barMidValue').innerText = '--';
+        document.getElementById('barRight').style.height = '0%';
+        document.getElementById('barRightValue').innerText = '--';
+      }
+    }
+
+    function sendCmd(cmd) {
+      fetch('/control?cmd=' + cmd)
+        .then(res => console.log("Command sent:", cmd));
+    }
+
+    fetchBattery();
+    fetchSensors();
+    setInterval(fetchSensors, 1000);
+  </script>
 </body>
 </html>
