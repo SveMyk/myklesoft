@@ -1,115 +1,152 @@
-from flask import Flask, request, render_template, jsonify
-import serial
-import time
-import threading
-import RPi.GPIO as GPIO
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GASSO - Manuell Kontroll</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+        header {
+            background-color: #00cfe8;
+            padding: 20px;
+        }
+        header img {
+            height: 180px;
+        }
+        .battery {
+            margin-top: 10px;
+            font-size: 1.2rem;
+            color: #003366;
+        }
+        .control-buttons {
+            margin: 30px auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            max-width: 500px;
+        }
+        .btn {
+            padding: 15px;
+            font-size: 1.1rem;
+            background-color: #003366;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #005f99;
+        }
+        .sensor-data {
+            margin-top: 40px;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            display: inline-block;
+        }
+        .sensor-table {
+            width: 100%;
+            margin-top: 10px;
+            font-size: 1.1rem;
+        }
+        .sensor-table td {
+            padding: 10px 20px;
+        }
+        .btn-back {
+            margin: 40px auto;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            background-color: #003366;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .btn-back:hover {
+            background-color: #005f99;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="/static/gasso_logo.png" alt="GASSO Logo">
+        <div class="battery">Batteristatus: <span id="batteryLevel">Loading...</span></div>
+    </header>
 
-# Sett opp GPIO for HC-SR04 ultralydsensor
-TRIG_PIN = 17  # GPIO17 (Pinne 11)
-ECHO_PIN = 27  # GPIO27 (Pinne 13)
+    <div class="control-buttons">
+        <button class="btn" onclick="sendCmd('CCW')">Rotér CCW</button>
+        <button class="btn" onclick="sendCmd('FWD')">Frem</button>
+        <button class="btn" onclick="sendCmd('CW')">Rotér CW</button>
 
-GPIO.setwarnings(False)
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(TRIG_PIN, GPIO.OUT)
-GPIO.setup(ECHO_PIN, GPIO.IN)
+        <button class="btn" onclick="sendCmd('LEFT')">Venstre</button>
+        <button class="btn" onclick="sendCmd('STOP')">Stopp</button>
+        <button class="btn" onclick="sendCmd('RIGHT')">Høyre</button>
 
-# Sett opp seriell kommunikasjon med Arduino
-SERIAL_PORT = "/dev/ttyACM0"
-BAUD_RATE = 115200
+        <div></div>
+        <button class="btn" onclick="sendCmd('BWD')">Bak</button>
+        <div></div>
+    </div>
 
-try:
-    ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
-    time.sleep(2)
-    print("Seriell tilkobling etablert!")
-except Exception as e:
-    print(f"Feil ved oppkobling til seriell port: {e}")
-    ser = None
+    <div class="sensor-data">
+        <strong>Avstandsmålinger (Ultralydsensorer i front):</strong>
+        <table class="sensor-table">
+            <tr>
+                <td>Venstre sensor:</td>
+                <td><span id="sensorLeft">--</span> cm</td>
+            </tr>
+            <tr>
+                <td>Midtre sensor:</td>
+                <td><span id="sensorMid">--</span> cm</td>
+            </tr>
+            <tr>
+                <td>Høyre sensor:</td>
+                <td><span id="sensorRight">--</span> cm</td>
+            </tr>
+        </table>
+    </div>
 
-# Flask app
-app = Flask(__name__)
+    <button class="btn-back" onclick="location.href='/'">Tilbake til hovedmeny</button>
 
-# Globale sensordata (simulert for venstre og høyre foreløpig)
-sensor_data = {
-    "left": 0.0,
-    "mid": 0.0,
-    "right": 0.0
-}
+    <script>
+        async function fetchBattery() {
+            try {
+                const response = await fetch('/battery');
+                const data = await response.json();
+                document.getElementById('batteryLevel').innerText = data.level + '%';
+            } catch (error) {
+                document.getElementById('batteryLevel').innerText = 'Ukjent';
+            }
+        }
 
-# Dummy batteridata
-battery_level = 78
+        async function fetchSensors() {
+            try {
+                const response = await fetch('/sensors');
+                const data = await response.json();
+                document.getElementById('sensorLeft').innerText = data.left;
+                document.getElementById('sensorMid').innerText = data.mid;
+                document.getElementById('sensorRight').innerText = data.right;
+            } catch (error) {
+                document.getElementById('sensorLeft').innerText = '--';
+                document.getElementById('sensorMid').innerText = '--';
+                document.getElementById('sensorRight').innerText = '--';
+            }
+        }
 
-# --- Funksjoner ---
-def send_to_arduino(command):
-    if ser and ser.is_open:
-        ser.write((command + "\n").encode())
-        return f"Kommando sendt: {command}"
-    else:
-        return "Seriell port ikke tilgjengelig"
+        function sendCmd(cmd) {
+            fetch('/control?cmd=' + cmd)
+                .then(res => console.log("Command sent:", cmd));
+        }
 
-def get_distance():
-    GPIO.output(TRIG_PIN, True)
-    time.sleep(0.00001)
-    GPIO.output(TRIG_PIN, False)
-    start_time = time.time()
-    stop_time = time.time()
-    while GPIO.input(ECHO_PIN) == 0:
-        start_time = time.time()
-    while GPIO.input(ECHO_PIN) == 1:
-        stop_time = time.time()
-    elapsed_time = stop_time - start_time
-    distance = (elapsed_time * 34300) / 2
-    return round(distance, 2)
-
-def log_distance():
-    while True:
-        sensor_data["mid"] = get_distance()
-        # Simuler venstre og høyre foreløpig:
-        sensor_data["left"] = sensor_data["mid"] + 2.5
-        sensor_data["right"] = sensor_data["mid"] - 2.5
-        print(f"[ULTRALYD] V: {sensor_data['left']}  M: {sensor_data['mid']}  H: {sensor_data['right']}")
-        time.sleep(1)
-
-# --- Flask Routes ---
-@app.route("/")
-def index():
-    return render_template("index.html")
-
-@app.route("/manual")
-def manual():
-    return render_template("manual.html")
-
-@app.route("/line")
-def linjenavigasjon():
-    return render_template("linjenavigasjon.html")
-
-@app.route("/auto")
-def autonom():
-    return render_template("autonom.html")
-
-@app.route("/control")
-def control():
-    cmd = request.args.get("cmd", "")
-    if cmd:
-        response = send_to_arduino(cmd)
-        print(response)
-        return response
-    return "Ingen kommando mottatt"
-
-@app.route("/battery")
-def battery():
-    return jsonify({"level": battery_level})
-
-@app.route("/sensors")
-def sensors():
-    return jsonify(sensor_data)
-
-@app.route("/distance")
-def distance():
-    avstand = get_distance()
-    return {"distance": avstand}
-
-# --- Start programmet ---
-if __name__ == "__main__":
-    distance_thread = threading.Thread(target=log_distance, daemon=True)
-    distance_thread.start()
-    app.run(host="0.0.0.0", port=80)
+        fetchBattery();
+        fetchSensors();
+        setInterval(fetchSensors, 1000);
+    </script>
+</body>
+</html>
