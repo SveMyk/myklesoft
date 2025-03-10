@@ -4,11 +4,17 @@ import time
 import threading
 import RPi.GPIO as GPIO
 
-# Flask-app
-app = Flask(__name__)
+# Sett opp GPIO for HC-SR04 ultralydsensor
+TRIG_PIN = 17  # GPIO17 (Pinne 11)
+ECHO_PIN = 27  # GPIO27 (Pinne 13)
 
-# Seriell kommunikasjon med Arduino
-SERIAL_PORT = "/dev/ttyACM0"  # Sjekk riktig port med `ls /dev/tty*`
+GPIO.setwarnings(False)  # Slår av advarsler
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(TRIG_PIN, GPIO.OUT)
+GPIO.setup(ECHO_PIN, GPIO.IN)
+
+# Sett opp seriell kommunikasjon med Arduino
+SERIAL_PORT = "/dev/ttyACM0"  # Endre hvis nødvendig
 BAUD_RATE = 115200
 
 try:
@@ -19,50 +25,51 @@ except Exception as e:
     print(f"Feil ved oppkobling til seriell port: {e}")
     ser = None
 
-# GPIO-oppsett for ultralydsensor
-TRIG_PIN = 17  # GPIO17 (Pinne 11)
-ECHO_PIN = 27  # GPIO27 (Pinne 13)
+def send_to_arduino(command):
+    """Sender kommando til Arduino via seriell kommunikasjon."""
+    if ser and ser.is_open:
+        ser.write((command + "\n").encode())
+        return f"Kommando sendt: {command}"
+    else:
+        return "Seriell port ikke tilgjengelig"
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(TRIG_PIN, GPIO.OUT)
-GPIO.setup(ECHO_PIN, GPIO.IN)
-
-# Funksjon for å måle avstand med HC-SR04
-def mål_avstand():
+def get_distance():
+    """Måler avstand med HC-SR04."""
     GPIO.output(TRIG_PIN, True)
-    time.sleep(0.00001)  # 10µs puls
+    time.sleep(0.00001)  # 10µs puls til trigger
     GPIO.output(TRIG_PIN, False)
 
-    start_tid, stopp_tid = 0, 0
+    start_time = time.time()
+    stop_time = time.time()
 
     while GPIO.input(ECHO_PIN) == 0:
-        start_tid = time.time()
-    
+        start_time = time.time()
+
     while GPIO.input(ECHO_PIN) == 1:
-        stopp_tid = time.time()
+        stop_time = time.time()
 
-    tid_forskjell = stopp_tid - start_tid
-    avstand = (tid_forskjell * 34300) / 2  # Lydens hastighet i luft: 343 m/s
-    return avstand
+    elapsed_time = stop_time - start_time
+    distance = (elapsed_time * 34300) / 2  # Lydens hastighet i luft
 
-# Funksjon for å kontinuerlig måle avstand og skrive til terminal
-def logg_avstand():
+    return round(distance, 2)  # Avstand i cm
+
+def log_distance():
+    """Logger avstandsdata til terminalen hvert sekund."""
     while True:
-        avstand = mål_avstand()
-        print(f"Avstand: {avstand:.2f} cm")  # Skriver til terminal hvert 2. sekund
-        time.sleep(2)
+        avstand = get_distance()
+        print(f"[AVSTAND]: {avstand} cm")
+        time.sleep(1)
 
-# Starter tråd for avstandsmålinger
-måle_tråd = threading.Thread(target=logg_avstand, daemon=True)
-måle_tråd.start()
+# Start Flask-server
+app = Flask(__name__)
 
-# Flask-ruter
 @app.route("/")
 def home():
     return render_template("index.html")
 
 @app.route("/control")
 def control():
+    """Behandler kommandoer fra webgrensesnittet."""
     cmd = request.args.get("cmd", "")
     if cmd:
         response = send_to_arduino(cmd)
@@ -70,9 +77,17 @@ def control():
         return response
     return "Ingen kommando mottatt"
 
+@app.route("/distance")
+def distance():
+    """Returnerer avstandsmåling fra ultralydsensoren."""
+    avstand = get_distance()
+    print(f"[FLASK API] Avstand: {avstand} cm")  # Skriver til terminalen for debugging
+    return {"distance": avstand}  # Returnerer JSON-respons
+
 if __name__ == "__main__":
-    try:
-        app.run(host="0.0.0.0", port=80)
-    except KeyboardInterrupt:
-        print("Avslutter program...")
-        GPIO.cleanup()
+    # Start tråd for avstandslogging i terminalen
+    distance_thread = threading.Thread(target=log_distance, daemon=True)
+    distance_thread.start()
+
+    # Start Flask-serveren
+    app.run(host="0.0.0.0", port=80)
