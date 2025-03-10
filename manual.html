@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GASSO - Manuell Kontroll</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+        header {
+            background-color: #00cfe8;
+            padding: 20px;
+        }
+        header img {
+            height: 180px;
+        }
+        .battery {
+            margin-top: 10px;
+            font-size: 1.2rem;
+            color: #003366;
+        }
+        .control-buttons {
+            margin: 30px auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 400px;
+        }
+        .btn {
+            padding: 15px;
+            font-size: 1.1rem;
+            background-color: #003366;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #005f99;
+        }
+        .sensor-data {
+            margin-top: 40px;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            display: inline-block;
+        }
+        .sensor-table {
+            width: 100%;
+            margin-top: 10px;
+            font-size: 1.1rem;
+        }
+        .sensor-table td {
+            padding: 10px 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="/static/gasso_logo.png" alt="GASSO Logo">
+        <div class="battery">Batteristatus: <span id="batteryLevel">Loading...</span></div>
+    </header>
+
+    <div class="control-buttons">
+        <button class="btn" onclick="sendCmd('FWD')">Frem</button>
+        <button class="btn" onclick="sendCmd('STOP')">Stopp</button>
+        <button class="btn" onclick="sendCmd('BACK')">Bak</button>
+        <button class="btn" onclick="sendCmd('LEFT')">Venstre</button>
+        <button class="btn" onclick="sendCmd('CW')">Rotér CW</button>
+        <button class="btn" onclick="sendCmd('RIGHT')">Høyre</button>
+        <button class="btn" onclick="sendCmd('CCW')">Rotér CCW</button>
+    </div>
+
+    <div class="sensor-data">
+        <strong>Avstandsmålinger (Ultralydsensorer i front):</strong>
+        <table class="sensor-table">
+            <tr>
+                <td>Venstre sensor:</td>
+                <td><span id="sensorLeft">--</span> cm</td>
+            </tr>
+            <tr>
+                <td>Midtre sensor:</td>
+                <td><span id="sensorMid">--</span> cm</td>
+            </tr>
+            <tr>
+                <td>Høyre sensor:</td>
+                <td><span id="sensorRight">--</span> cm</td>
+            </tr>
+        </table>
+    </div>
+
+    <script>
+        async function fetchBattery() {
+            try {
+                const response = await fetch('/battery');
+                const data = await response.json();
+                document.getElementById('batteryLevel').innerText = data.level + '%';
+            } catch (error) {
+                document.getElementById('batteryLevel').innerText = 'Ukjent';
+            }
+        }
+
+        async function fetchSensors() {
+            try {
+                const response = await fetch('/sensors');
+                const data = await response.json();
+                document.getElementById('sensorLeft').innerText = data.left;
+                document.getElementById('sensorMid').innerText = data.mid;
+                document.getElementById('sensorRight').innerText = data.right;
+            } catch (error) {
+                document.getElementById('sensorLeft').innerText = '--';
+                document.getElementById('sensorMid').innerText = '--';
+                document.getElementById('sensorRight').innerText = '--';
+            }
+        }
+
+        function sendCmd(cmd) {
+            fetch('/control?cmd=' + cmd)
+                .then(res => console.log("Command sent:", cmd));
+        }
+
+        fetchBattery();
+        fetchSensors();
+        setInterval(fetchSensors, 1000); // Oppdater sensorverdier hvert sekund
+    </script>
+</body>
+</html>
