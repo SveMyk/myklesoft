@@ -1,14 +1,14 @@
+from flask import Flask, request, render_template
 import serial
 import time
 import threading
 import RPi.GPIO as GPIO
-from flask import Flask, request, render_template
 
-# Flask-app for webkontroll
+# Flask-app
 app = Flask(__name__)
 
-# Sett opp seriell kommunikasjon med Arduino
-SERIAL_PORT = "/dev/ttyUSB0"  # Endre til riktig port
+# Seriell kommunikasjon med Arduino
+SERIAL_PORT = "/dev/ttyACM0"  # Sjekk riktig port med `ls /dev/tty*`
 BAUD_RATE = 115200
 
 try:
@@ -45,16 +45,15 @@ def mål_avstand():
     avstand = (tid_forskjell * 34300) / 2  # Lydens hastighet i luft: 343 m/s
     return avstand
 
-# Funksjon for å kontinuerlig sende avstand til Serial Plotter
-def send_avstand_til_serial():
+# Funksjon for å kontinuerlig måle avstand og skrive til terminal
+def logg_avstand():
     while True:
         avstand = mål_avstand()
-        if ser and ser.is_open:
-            ser.write(f"{avstand:.2f}\n".encode())  # Sender avstand til serial plotter
-        time.sleep(0.1)  # Juster oppdateringsfrekvensen
+        print(f"Avstand: {avstand:.2f} cm")  # Skriver til terminal hvert 2. sekund
+        time.sleep(2)
 
-# Starter tråd for ultralydmålinger
-måle_tråd = threading.Thread(target=send_avstand_til_serial, daemon=True)
+# Starter tråd for avstandsmålinger
+måle_tråd = threading.Thread(target=logg_avstand, daemon=True)
 måle_tråd.start()
 
 # Flask-ruter
