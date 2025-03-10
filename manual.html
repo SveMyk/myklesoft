@@ -43,39 +43,19 @@
     .btn:hover {
       background-color: #005f99;
     }
-    .sensor-bars {
+    .sensor-values {
       display: flex;
       justify-content: center;
-      align-items: flex-end;
-      gap: 30px;
+      gap: 40px;
       margin-top: 40px;
-      height: 240px;
-    }
-    .bar-container {
-      width: 50px;
-      background-color: #ddd;
-      display: flex;
-      flex-direction: column-reverse;
-      justify-content: flex-start;
-      border-radius: 5px;
-      overflow: hidden;
-      position: relative;
-    }
-    .bar-fill {
-      width: 100%;
-      transition: height 0.3s;
-    }
-    .bar-value {
-      position: absolute;
-      top: -25px;
-      width: 100%;
-      font-size: 1rem;
+      font-size: 1.3rem;
       font-weight: bold;
-      color: #000;
     }
-    .bar-label {
-      margin-top: 10px;
-      font-weight: bold;
+    .sensor-values div {
+      background-color: #e6e6e6;
+      padding: 10px 20px;
+      border-radius: 10px;
+      min-width: 100px;
     }
     .btn-back {
       margin: 50px auto;
@@ -111,22 +91,10 @@
     <div></div>
   </div>
 
-  <div class="sensor-bars">
-    <div class="bar-container">
-      <div id="barLeftValue" class="bar-value">--</div>
-      <div id="barLeft" class="bar-fill" style="height: 0%; background-color: #aaa;"></div>
-      <div class="bar-label">Venstre</div>
-    </div>
-    <div class="bar-container">
-      <div id="barMidValue" class="bar-value">--</div>
-      <div id="barMid" class="bar-fill" style="height: 0%; background-color: #aaa;"></div>
-      <div class="bar-label">Midt</div>
-    </div>
-    <div class="bar-container">
-      <div id="barRightValue" class="bar-value">--</div>
-      <div id="barRight" class="bar-fill" style="height: 0%; background-color: #aaa;"></div>
-      <div class="bar-label">Høyre</div>
-    </div>
+  <div class="sensor-values">
+    <div>Venstre: <span id="sensorLeft">--</span> cm</div>
+    <div>Midt: <span id="sensorMid">--</span> cm</div>
+    <div>Høyre: <span id="sensorRight">--</span> cm</div>
   </div>
 
   <button class="btn-back" onclick="location.href='/'">Tilbake til hovedmeny</button>
@@ -142,48 +110,19 @@
       }
     }
 
-    function calculateBarColor(distance) {
-      const min = 10;
-      const max = 80;
-      const clamped = Math.max(min, Math.min(max, distance));
-      const percent = (clamped - min) / (max - min);
-      const red = Math.round(255 - (percent * 255));
-      const green = Math.round(percent * 255);
-      return `rgb(${red},${green},0)`;
-    }
-
     async function fetchSensors() {
       try {
         const response = await fetch('/sensors');
         const data = await response.json();
 
-        let left = Math.round(data.left);
-        let mid = Math.round(data.mid);
-        let right = Math.round(data.right);
-
-        let leftHeight = Math.min(100, (left / 80) * 100);
-        let midHeight = Math.min(100, (mid / 80) * 100);
-        let rightHeight = Math.min(100, (right / 80) * 100);
-
-        document.getElementById('barLeft').style.height = leftHeight + '%';
-        document.getElementById('barLeft').style.backgroundColor = calculateBarColor(left);
-        document.getElementById('barLeftValue').innerText = left + ' cm';
-
-        document.getElementById('barMid').style.height = midHeight + '%';
-        document.getElementById('barMid').style.backgroundColor = calculateBarColor(mid);
-        document.getElementById('barMidValue').innerText = mid + ' cm';
-
-        document.getElementById('barRight').style.height = rightHeight + '%';
-        document.getElementById('barRight').style.backgroundColor = calculateBarColor(right);
-        document.getElementById('barRightValue').innerText = right + ' cm';
+        document.getElementById('sensorLeft').innerText = Math.round(data.left);
+        document.getElementById('sensorMid').innerText = Math.round(data.mid);
+        document.getElementById('sensorRight').innerText = Math.round(data.right);
 
       } catch (error) {
-        document.getElementById('barLeft').style.height = '0%';
-        document.getElementById('barLeftValue').innerText = '--';
-        document.getElementById('barMid').style.height = '0%';
-        document.getElementById('barMidValue').innerText = '--';
-        document.getElementById('barRight').style.height = '0%';
-        document.getElementById('barRightValue').innerText = '--';
+        document.getElementById('sensorLeft').innerText = '--';
+        document.getElementById('sensorMid').innerText = '--';
+        document.getElementById('sensorRight').innerText = '--';
       }
     }
 
