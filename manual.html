@@ -28,8 +28,8 @@
             margin: 30px auto;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            max-width: 400px;
+            gap: 15px;
+            max-width: 500px;
         }
         .btn {
             padding: 15px;
@@ -68,13 +68,17 @@
     </header>
 
     <div class="control-buttons">
-        <button class="btn" onclick="sendCmd('FWD')">Frem</button>
-        <button class="btn" onclick="sendCmd('STOP')">Stopp</button>
-        <button class="btn" onclick="sendCmd('BACK')">Bak</button>
-        <button class="btn" onclick="sendCmd('LEFT')">Venstre</button>
-        <button class="btn" onclick="sendCmd('CW')">Rotér CW</button>
-        <button class="btn" onclick="sendCmd('RIGHT')">Høyre</button>
         <button class="btn" onclick="sendCmd('CCW')">Rotér CCW</button>
+        <button class="btn" onclick="sendCmd('FWD')">Frem</button>
+        <button class="btn" onclick="sendCmd('CW')">Rotér CW</button>
+
+        <button class="btn" onclick="sendCmd('LEFT')">Venstre</button>
+        <button class="btn" onclick="sendCmd('STOP')">Stopp</button>
+        <button class="btn" onclick="sendCmd('RIGHT')">Høyre</button>
+
+        <div></div>
+        <button class="btn" onclick="sendCmd('BACK')">Bak</button>
+        <div></div>
     </div>
 
     <div class="sensor-data">
@@ -127,7 +131,7 @@
 
         fetchBattery();
         fetchSensors();
-        setInterval(fetchSensors, 1000); // Oppdater sensorverdier hvert sekund
+        setInterval(fetchSensors, 1000);
     </script>
 </body>
 </html>
