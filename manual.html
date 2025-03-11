@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GASSO - Manuell Kontroll</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f4f4f4; text-align: center; margin: 0; padding: 0; }
+    header { background-color: #00cfe8; padding: 20px; }
+    header img { height: 180px; }
+    .battery { margin-top: 10px; font-size: 1.2rem; color: #003366; }
+    .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; max-width: 900px; margin: 30px auto; }
+    button { padding: 20px; font-size: 16px; border-radius: 10px; cursor: pointer; background-color: #003366; color: #fff; border: none; }
+    button:hover { background-color: #005f99; }
+    #status { margin-top: 20px; font-weight: bold; }
+    .btn-back { margin: 50px auto; padding: 15px 30px; font-size: 1.1rem; background-color: #003366; color: #fff; border: none; border-radius: 10px; cursor: pointer; display: block; }
+    .btn-back:hover { background-color: #005f99; }
+    .sensor-values { display: flex; justify-content: center; gap: 40px; margin-top: 30px; font-size: 1.2rem; font-weight: bold; }
+    .sensor-values div { background-color: #e6e6e6; padding: 10px 20px; border-radius: 10px; min-width: 100px; }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="/static/gasso_logo.png" alt="GASSO Logo" />
+    <div class="battery">Batteristatus: <span id="batteryLevel">Loading...</span></div>
+  </header>
+
+  <div class="grid">
+    <button onclick="sendCommand(0,0,45)">Roter 45°</button>
+    <button onclick="sendCommand(0,0,-1)">Roter CCW</button>
+    <button onclick="sendCommand(1,0,0)">Frem</button>
+    <button onclick="sendCommand(0,0,1)">Roter CW</button>
+    <button onclick="sendCommand(0,0,-45)">Roter 45°</button>
+
+    <button onclick="sendCommand(0,0,90)">Roter 90°</button>
+    <button onclick="sendCommand(0,1,0)">Venstre</button>
+    <button onclick="sendCommand(0,0,0)">Stopp</button>
+    <button onclick="sendCommand(0,-1,0)">Høyre</button>
+    <button onclick="sendCommand(0,0,-90)">Roter 90°</button>
+
+    <button onclick="sendCommand(0,0,135)">Roter 135°</button>
+    <div></div>
+    <button onclick="sendCommand(-1,0,0)">Bak</button>
+    <div></div>
+    <button onclick="sendCommand(0,0,-135)">Roter 135°</button>
+  </div>
+
+  <div id="status">Klar for kommando</div>
+
+  <div class="sensor-values">
+    <div>Venstre: <span id="sensorLeft">--</span> cm</div>
+    <div>Midt: <span id="sensorMid">--</span> cm</div>
+    <div>Høyre: <span id="sensorRight">--</span> cm</div>
+  </div>
+
+  <button class="btn-back" onclick="location.href='/'">Tilbake til hovedmeny</button>
+
+  <script>
+    async function fetchBattery() {
+      try {
+        const response = await fetch('/battery');
+        const data = await response.json();
+        document.getElementById('batteryLevel').innerText = data.level + '%';
+      } catch (error) {
+        document.getElementById('batteryLevel').innerText = 'Ukjent';
+      }
+    }
+
+    async function fetchSensors() {
+      try {
+        const response = await fetch('/sensors');
+        const data = await response.json();
+        document.getElementById('sensorLeft').innerText = Math.round(data.left);
+        document.getElementById('sensorMid').innerText = Math.round(data.mid);
+        document.getElementById('sensorRight').innerText = Math.round(data.right);
+      } catch (error) {
+        document.getElementById('sensorLeft').innerText = '--';
+        document.getElementById('sensorMid').innerText = '--';
+        document.getElementById('sensorRight').innerText = '--';
+      }
+    }
+
+    function sendCommand(x, y, r) {
+      const url = `/control?x=${x}&y=${y}&r=${r}`;
+      fetch(url)
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById("status").innerText = data;
+        })
+        .catch(err => {
+          document.getElementById("status").innerText = "Feil ved sending av kommando.";
+        });
+    }
+
+    fetchBattery();
+    fetchSensors();
+    setInterval(fetchSensors, 1000);
+  </script>
+</body>
+</html>
