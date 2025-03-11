@@ -26,38 +26,38 @@
   </header>
 
   <div class="grid">
-    <button onclick="sendCommand(0,0,45)">Roter 45°</button>
+    <button onclick="sendCommand(0,0,45)">Roter 45Â°</button>
     <button onmousedown="sendCommand(0,0,-1)" onmouseup="sendStop()" ontouchstart="sendCommand(0,0,-1)" ontouchend="sendStop()">Roter CCW</button>
     <button onmousedown="sendCommand(1,0,0)" onmouseup="sendStop()" ontouchstart="sendCommand(1,0,0)" ontouchend="sendStop()">Frem</button>
     <button onmousedown="sendCommand(0,0,1)" onmouseup="sendStop()" ontouchstart="sendCommand(0,0,1)" ontouchend="sendStop()">Roter CW</button>
-    <button onclick="sendCommand(0,0,-45)">Roter 45°</button>
+    <button onclick="sendCommand(0,0,-45)">Roter 45Â°</button>
 
-    <button onclick="sendCommand(0,0,90)">Roter 90°</button>
+    <button onclick="sendCommand(0,0,90)">Roter 90Â°</button>
     <button onmousedown="sendCommand(0,1,0)" onmouseup="sendStop()" ontouchstart="sendCommand(0,1,0)" ontouchend="sendStop()">Venstre</button>
     <button onclick="sendCommand(0,0,0)">Stopp</button>
-    <button onmousedown="sendCommand(0,-1,0)" onmouseup="sendStop()" ontouchstart="sendCommand(0,-1,0)" ontouchend="sendStop()">Høyre</button>
-    <button onclick="sendCommand(0,0,-90)">Roter 90°</button>
+    <button onmousedown="sendCommand(0,-1,0)" onmouseup="sendStop()" ontouchstart="sendCommand(0,-1,0)" ontouchend="sendStop()">HÃ¸yre</button>
+    <button onclick="sendCommand(0,0,-90)">Roter 90Â°</button>
 
-    <button onclick="sendCommand(0,0,135)">Roter 135°</button>
+    <button onclick="sendCommand(0,0,135)">Roter 135Â°</button>
     <div></div>
     <button onmousedown="sendCommand(-1,0,0)" onmouseup="sendStop()" ontouchstart="sendCommand(-1,0,0)" ontouchend="sendStop()">Bak</button>
     <div></div>
-    <button onclick="sendCommand(0,0,-135)">Roter 135°</button>
+    <button onclick="sendCommand(0,0,-135)">Roter 135Â°</button>
   </div>
 
   <div id="status">Klar for kommando</div>
 
   <div class="sensor-visual">
     <h3>Ultralydsensorvisning</h3>
-    <svg id="sensorRadar" viewBox="-150 -10 300 300" width="100%" height="300">
-      <line id="leftBeam" x1="0" y1="0" x2="0" y2="-100" stroke="blue" stroke-width="4" />
-      <line id="midBeam" x1="0" y1="0" x2="0" y2="-100" stroke="green" stroke-width="4" />
-      <line id="rightBeam" x1="0" y1="0" x2="0" y2="-100" stroke="red" stroke-width="4" />
+    <svg id="sensorRadar" viewBox="-300 -300 600 400" width="100%" height="300">
+      <line id="leftBeam" x1="0" y1="0" x2="0" y2="-100" stroke="blue" stroke-width="35" />
+      <line id="midBeam" x1="0" y1="0" x2="0" y2="-100" stroke="green" stroke-width="35" />
+      <line id="rightBeam" x1="0" y1="0" x2="0" y2="-100" stroke="red" stroke-width="35" />
     </svg>
     <div class="sensor-labels">
       <div id="leftLabel">Venstre - -- cm</div>
       <div id="midLabel">Senter - -- cm</div>
-      <div id="rightLabel">Høyre - -- cm</div>
+      <div id="rightLabel">HÃ¸yre - -- cm</div>
     </div>
   </div>
 
@@ -95,8 +95,8 @@
     function sendStop() { sendCommand(0, 0, 0); }
 
     function updateRadar(data) {
-      const scale = 1.2;
-      const maxLen = 180;
+      const scale = 5.0;
+      const maxLen = 1000;
 
       const l = Math.min(data.left * scale, maxLen);
       const m = Math.min(data.mid * scale, maxLen);
@@ -117,7 +117,7 @@
 
       document.getElementById("leftLabel").innerText = `Venstre - ${data.left} cm`;
       document.getElementById("midLabel").innerText = `Senter - ${data.mid} cm`;
-      document.getElementById("rightLabel").innerText = `Høyre - ${data.right} cm`;
+      document.getElementById("rightLabel").innerText = `HÃ¸yre - ${data.right} cm`;
     }
 
     fetchBattery();
