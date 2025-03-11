@@ -69,7 +69,7 @@ def update_sensor_data():
             except:
                 sensor_data[key] = 0.0
         print(f"[ULTRALYD] V: {sensor_data['left']}  M: {sensor_data['mid']}  H: {sensor_data['right']}")
-        time.sleep(1)
+        time.sleep(0.25)
 
 # ==== Flask Webserver ====
 app = Flask(__name__)
