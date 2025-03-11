@@ -15,8 +15,7 @@
     #status { margin-top: 20px; font-weight: bold; }
     .btn-back { margin: 50px auto; padding: 15px 30px; font-size: 1.1rem; background-color: #003366; color: #fff; border: none; border-radius: 10px; cursor: pointer; display: block; }
     .btn-back:hover { background-color: #005f99; }
-    .sensor-values { display: flex; justify-content: center; gap: 40px; margin-top: 30px; font-size: 1.2rem; font-weight: bold; }
-    .sensor-values div { background-color: #e6e6e6; padding: 10px 20px; border-radius: 10px; min-width: 100px; }
+    .sensor-visual { margin: 30px auto; max-width: 400px; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
   </style>
 </head>
 <body>
@@ -47,10 +46,18 @@
 
   <div id="status">Klar for kommando</div>
 
-  <div class="sensor-values">
-    <div>Venstre: <span id="sensorLeft">--</span> cm</div>
-    <div>Midt: <span id="sensorMid">--</span> cm</div>
-    <div>Høyre: <span id="sensorRight">--</span> cm</div>
+  <div class="sensor-visual">
+    <h3>Ultralydsensorvisning</h3>
+    <svg id="sensorRadar" viewBox="-150 -10 300 160" width="100%" height="180">
+      <line id="leftBeam" x1="0" y1="0" x2="0" y2="-100" stroke="blue" stroke-width="4" />
+      <text id="leftText" x="0" y="0" fill="blue">V</text>
+
+      <line id="midBeam" x1="0" y1="0" x2="0" y2="-100" stroke="green" stroke-width="4" />
+      <text id="midText" x="0" y="0" fill="green">M</text>
+
+      <line id="rightBeam" x1="0" y1="0" x2="0" y2="-100" stroke="red" stroke-width="4" />
+      <text id="rightText" x="0" y="0" fill="red">H</text>
+    </svg>
   </div>
 
   <button class="btn-back" onclick="location.href='/'">Tilbake til hovedmeny</button>
@@ -70,13 +77,9 @@
       try {
         const response = await fetch('/sensors');
         const data = await response.json();
-        document.getElementById('sensorLeft').innerText = Math.round(data.left);
-        document.getElementById('sensorMid').innerText = Math.round(data.mid);
-        document.getElementById('sensorRight').innerText = Math.round(data.right);
+        updateRadar(data);
       } catch (error) {
-        document.getElementById('sensorLeft').innerText = '--';
-        document.getElementById('sensorMid').innerText = '--';
-        document.getElementById('sensorRight').innerText = '--';
+        console.error("Feil ved henting av sensordata");
       }
     }
 
@@ -84,20 +87,47 @@
       const url = `/control?x=${x}&y=${y}&r=${r}`;
       fetch(url)
         .then(response => response.text())
-        .then(data => {
-          document.getElementById("status").innerText = data;
-        })
-        .catch(err => {
-          document.getElementById("status").innerText = "Feil ved sending av kommando.";
-        });
+        .then(data => { document.getElementById("status").innerText = data; })
+        .catch(err => { document.getElementById("status").innerText = "Feil ved sending av kommando."; });
     }
 
-    function sendStop() {
-      sendCommand(0, 0, 0);
+    function sendStop() { sendCommand(0, 0, 0); }
+
+    function updateRadar(data) {
+      const scale = 1.2;
+      const maxLen = 120; // maksimal linjelengde i SVG
+
+      const l = Math.min(data.left * scale, maxLen);
+      const m = Math.min(data.mid * scale, maxLen);
+      const r = Math.min(data.right * scale, maxLen);
+
+      // Venstre 30 grader
+      const lx = -l * Math.sin(Math.PI / 6);
+      const ly = -l * Math.cos(Math.PI / 6);
+      document.getElementById("leftBeam").setAttribute("x2", lx);
+      document.getElementById("leftBeam").setAttribute("y2", ly);
+      document.getElementById("leftText").setAttribute("x", lx);
+      document.getElementById("leftText").setAttribute("y", ly - 5);
+      document.getElementById("leftText").textContent = `${data.left} cm`;
+
+      // Midtre rett frem
+      document.getElementById("midBeam").setAttribute("x2", 0);
+      document.getElementById("midBeam").setAttribute("y2", -m);
+      document.getElementById("midText").setAttribute("x", 0);
+      document.getElementById("midText").setAttribute("y", -m - 5);
+      document.getElementById("midText").textContent = `${data.mid} cm`;
+
+      // Høyre -30 grader
+      const rx = r * Math.sin(Math.PI / 6);
+      const ry = -r * Math.cos(Math.PI / 6);
+      document.getElementById("rightBeam").setAttribute("x2", rx);
+      document.getElementById("rightBeam").setAttribute("y2", ry);
+      document.getElementById("rightText").setAttribute("x", rx);
+      document.getElementById("rightText").setAttribute("y", ry - 5);
+      document.getElementById("rightText").textContent = `${data.right} cm`;
     }
 
     fetchBattery();
-    fetchSensors();
     setInterval(fetchSensors, 1000);
   </script>
 </body>
