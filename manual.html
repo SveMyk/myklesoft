@@ -27,20 +27,20 @@
 
   <div class="grid">
     <button onclick="sendCommand(0,0,45)">Roter 45°</button>
-    <button onclick="sendCommand(0,0,-1)">Roter CCW</button>
-    <button onclick="sendCommand(1,0,0)">Frem</button>
-    <button onclick="sendCommand(0,0,1)">Roter CW</button>
+    <button onmousedown="sendCommand(0,0,-1)" onmouseup="sendStop()" ontouchstart="sendCommand(0,0,-1)" ontouchend="sendStop()">Roter CCW</button>
+    <button onmousedown="sendCommand(1,0,0)" onmouseup="sendStop()" ontouchstart="sendCommand(1,0,0)" ontouchend="sendStop()">Frem</button>
+    <button onmousedown="sendCommand(0,0,1)" onmouseup="sendStop()" ontouchstart="sendCommand(0,0,1)" ontouchend="sendStop()">Roter CW</button>
     <button onclick="sendCommand(0,0,-45)">Roter 45°</button>
 
     <button onclick="sendCommand(0,0,90)">Roter 90°</button>
-    <button onclick="sendCommand(0,1,0)">Venstre</button>
+    <button onmousedown="sendCommand(0,1,0)" onmouseup="sendStop()" ontouchstart="sendCommand(0,1,0)" ontouchend="sendStop()">Venstre</button>
     <button onclick="sendCommand(0,0,0)">Stopp</button>
-    <button onclick="sendCommand(0,-1,0)">Høyre</button>
+    <button onmousedown="sendCommand(0,-1,0)" onmouseup="sendStop()" ontouchstart="sendCommand(0,-1,0)" ontouchend="sendStop()">Høyre</button>
     <button onclick="sendCommand(0,0,-90)">Roter 90°</button>
 
     <button onclick="sendCommand(0,0,135)">Roter 135°</button>
     <div></div>
-    <button onclick="sendCommand(-1,0,0)">Bak</button>
+    <button onmousedown="sendCommand(-1,0,0)" onmouseup="sendStop()" ontouchstart="sendCommand(-1,0,0)" ontouchend="sendStop()">Bak</button>
     <div></div>
     <button onclick="sendCommand(0,0,-135)">Roter 135°</button>
   </div>
@@ -90,6 +90,10 @@
         .catch(err => {
           document.getElementById("status").innerText = "Feil ved sending av kommando.";
         });
+    }
+
+    function sendStop() {
+      sendCommand(0, 0, 0);
     }
 
     fetchBattery();
