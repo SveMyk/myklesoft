@@ -17,7 +17,7 @@ for sensor in SENSORS.values():
     GPIO.setup(sensor["TRIG"], GPIO.OUT)
     GPIO.setup(sensor["ECHO"], GPIO.IN)
 
-# ==== GPIO-setup for IR-sensorene ====
+# ==== GPIO-OPPSETT FOR IR-SENSORER ====
 IR_SENSORS = {
     "D1": 4,
     "D2": 5,
@@ -29,9 +29,9 @@ IR_SENSORS = {
     "D8": 21
 }
 
-# Sett opp GPIO for IR-sensorer
+# Sett opp GPIO for IR-sensorer med interne pull-down-motstander
 for pin in IR_SENSORS.values():
-    GPIO.setup(pin, GPIO.IN)
+    GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 # ==== Serielt mot Arduino ====
 SERIAL_PORT = "/dev/ttyACM0"
