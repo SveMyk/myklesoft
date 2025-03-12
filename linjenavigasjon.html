@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GASSO - Linjenavigasjon</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+        header {
+            background-color: #00cfe8;
+            padding: 20px;
+        }
+        header img {
+            height: 180px;
+        }
+
+        /* Sensorvisning */
+        .sensor-section {
+            margin: 30px auto;
+            max-width: 600px;
+        }
+        .sensor-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 20px auto;
+        }
+        .sensor {
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            font-size: 18px;
+        }
+        .high { color: green; }
+        .low { color: red; }
+
+        /* Innholdstekst */
+        .content {
+            margin-top: 40px;
+            font-size: 1.3rem;
+            color: #333;
+        }
+
+        /* Tilbakeknapp */
+        .btn-back {
+            margin: 40px auto;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            background-color: #003366;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .btn-back:hover {
+            background-color: #005f99;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="/static/gasso_logo.png" alt="GASSO Logo">
+    </header>
+
+    <!-- Sensorseksjon -->
+    <div class="sensor-section">
+        <h2>IR Sensor Array</h2>
+        <div class="sensor-container">
+            <div class="sensor" id="D1">Sensor 1: ...</div>
+            <div class="sensor" id="D2">Sensor 2: ...</div>
+            <div class="sensor" id="D3">Sensor 3: ...</div>
+            <div class="sensor" id="D4">Sensor 4: ...</div>
+            <div class="sensor" id="D5">Sensor 5: ...</div>
+            <div class="sensor" id="D6">Sensor 6: ...</div>
+            <div class="sensor" id="D7">Sensor 7: ...</div>
+            <div class="sensor" id="D8">Sensor 8: ...</div>
+        </div>
+    </div>
+
+    <!-- Informasjonstekst -->
+    <div class="content">
+        <p>Linjenavigasjon er under arbeid. Denne funksjonen blir tilgjengelig snart.</p>
+    </div>
+
+    <!-- Tilbakeknapp -->
+    <button class="btn-back" onclick="location.href='/'">Tilbake til hovedmeny</button>
+
+    <!-- JS for å hente sensorstatus -->
+    <script>
+        async function fetchSensors() {
+            try {
+                const response = await fetch('/ir_sensors');
+                const data = await response.json();
+                for (const [sensor, status] of Object.entries(data)) {
+                    const element = document.getElementById(sensor);
+                    if (element) {
+                        element.textContent = `${sensor}: ${status}`;
+                        element.className = 'sensor ' + (status === 'Høy' ? 'high' : 'low');
+                    }
+                }
+            } catch (error) {
+                console.error("Feil ved henting av sensordata:", error);
+            }
+        }
+
+        setInterval(fetchSensors, 500); // Oppdater hvert 0.5 sekund
+        fetchSensors(); // Kjør ved lasting
+    </script>
+</body>
+</html>
