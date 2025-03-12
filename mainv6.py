@@ -17,7 +17,7 @@ for sensor in SENSORS.values():
     GPIO.setup(sensor["TRIG"], GPIO.OUT)
     GPIO.setup(sensor["ECHO"], GPIO.IN)
 
-# ==== GPIO-setup for IR sensorene ====
+# ==== GPIO-setup for IR-sensorene ====
 IR_SENSORS = {
     "D1": 4,
     "D2": 5,
@@ -29,7 +29,7 @@ IR_SENSORS = {
     "D8": 21
 }
 
-# Sett opp GPIO for IR sensorer
+# Sett opp GPIO for IR-sensorer
 for pin in IR_SENSORS.values():
     GPIO.setup(pin, GPIO.IN)
 
@@ -46,7 +46,7 @@ except Exception as e:
 
 # ==== Globale data ====
 sensor_data = {"left": 0.0, "mid": 0.0, "right": 0.0}
-battery_level = 78  # Dummy verdi
+battery_level = 78  # Dummy-verdi
 
 # ==== Funksjoner ====
 def send_to_arduino(command):
@@ -84,12 +84,15 @@ def update_sensor_data():
                 sensor_data[key] = get_distance(pins["TRIG"], pins["ECHO"])
             except:
                 sensor_data[key] = 0.0
-        print(f"[ULTRALYD] V: {sensor_data['left']}  M: {sensor_data['mid']}  H: {sensor_data['right']}")
+        # Fjern eller kommenter ut følgende linje for å stoppe utskrift av ultralyddata
+        # print(f"[ULTRALYD] V: {sensor_data['left']}  M: {sensor_data['mid']}  H: {sensor_data['right']}")
         time.sleep(0.25)
 
-# Funksjon for å lese IR sensorverdier
+# Funksjon for å lese IR-sensorverdier og skrive dem til terminalen
 def read_ir_sensors():
-    return {name: ("Høy" if GPIO.input(pin) else "Lav") for name, pin in IR_SENSORS.items()}
+    sensor_values = {name: ("High" if GPIO.input(pin) else "Low") for name, pin in IR_SENSORS.items()}
+    print("[IR-SENSORER]", sensor_values)
+    return sensor_values
 
 # ==== Flask Webserver ====
 app = Flask(__name__)
@@ -142,7 +145,6 @@ def distance():
 def ir_sensors():
     sensor_values = read_ir_sensors()
     return jsonify(sensor_values)
-
 
 # ==== Start Flask-server ====
 if __name__ == "__main__":
