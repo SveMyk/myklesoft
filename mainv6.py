@@ -17,25 +17,10 @@ for sensor in SENSORS.values():
     GPIO.setup(sensor["TRIG"], GPIO.OUT)
     GPIO.setup(sensor["ECHO"], GPIO.IN)
 
-# ==== GPIO-OPPSETT FOR IR-SENSORER ====
-IR_SENSORS = {
-    "D1": 4,
-    "D2": 5,
-    "D3": 6,
-    "D4": 13,
-    "D5": 19,
-    "D6": 26,
-    "D7": 16,
-    "D8": 21
-}
-
-# Sett opp GPIO for IR-sensorer med interne pull-down-motstander
-for pin in IR_SENSORS.values():
-    GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-
 # ==== Serielt mot Arduino ====
 SERIAL_PORT = "/dev/ttyACM0"
 BAUD_RATE = 115200
+
 try:
     ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
     time.sleep(2)
@@ -46,6 +31,7 @@ except Exception as e:
 
 # ==== Globale data ====
 sensor_data = {"left": 0.0, "mid": 0.0, "right": 0.0}
+ir_sensor_data = {"D1": 0, "D3": 0, "D4": 0, "D6": 0}
 battery_level = 78  # Dummy-verdi
 
 # ==== Funksjoner ====
@@ -84,15 +70,24 @@ def update_sensor_data():
                 sensor_data[key] = get_distance(pins["TRIG"], pins["ECHO"])
             except:
                 sensor_data[key] = 0.0
-        # Fjern eller kommenter ut følgende linje for å stoppe utskrift av ultralyddata
-        # print(f"[ULTRALYD] V: {sensor_data['left']}  M: {sensor_data['mid']}  H: {sensor_data['right']}")
         time.sleep(0.25)
 
-# Funksjon for å lese IR-sensorverdier og skrive dem til terminalen
-def read_ir_sensors():
-    sensor_values = {name: ("High" if GPIO.input(pin) else "Low") for name, pin in IR_SENSORS.items()}
-    print("[IR-SENSORER]", sensor_values)
-    return sensor_values
+def read_serial_from_arduino():
+    while True:
+        if ser and ser.in_waiting > 0:
+            try:
+                line = ser.readline().decode().strip()
+                if line.startswith("IR"):
+                    # Eksempel: IR D1:420 D3:435 D4:440 D6:410
+                    parts = line[3:].strip().split()
+                    for part in parts:
+                        if ':' in part:
+                            key, val = part.split(":")
+                            if key in ir_sensor_data:
+                                ir_sensor_data[key] = int(val)
+                    print("[IR-SENSORER]", ir_sensor_data)
+            except Exception as e:
+                print(f"[SERIAL ERROR] {e}")
 
 # ==== Flask Webserver ====
 app = Flask(__name__)
@@ -115,7 +110,6 @@ def autonom():
 
 @app.route("/control")
 def control():
-    # Ny: Støtte for både "cmd" og MOV:X/Y/R-parametre
     cmd = request.args.get("cmd")
     if cmd:
         return send_to_arduino(cmd)
@@ -141,13 +135,16 @@ def sensors():
 def distance():
     return jsonify({"distance": sensor_data["mid"]})
 
-@app.route("/ir_sensors")
-def ir_sensors():
-    sensor_values = read_ir_sensors()
-    return jsonify(sensor_values)
+@app.route("/ir_data")
+def ir_data():
+    return jsonify(ir_sensor_data)
 
 # ==== Start Flask-server ====
 if __name__ == "__main__":
-    sensor_thread = threading.Thread(target=update_sensor_data, daemon=True)
-    sensor_thread.start()
+    thread_ultrasonic = threading.Thread(target=update_sensor_data, daemon=True)
+    thread_irserial = threading.Thread(target=read_serial_from_arduino, daemon=True)
+
+    thread_ultrasonic.start()
+    thread_irserial.start()
+
     app.run(host="0.0.0.0", port=80)
