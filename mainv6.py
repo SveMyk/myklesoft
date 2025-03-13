@@ -6,7 +6,6 @@ import time
 import threading
 import RPi.GPIO as GPIO
 
-# ==== GPIO-oppsett for HC-SR04 ====
 SENSORS = {
     "left": {"TRIG": 17, "ECHO": 27},
     "mid":  {"TRIG": 22, "ECHO": 23},
@@ -19,10 +18,8 @@ for sensor in SENSORS.values():
     GPIO.setup(sensor["TRIG"], GPIO.OUT)
     GPIO.setup(sensor["ECHO"], GPIO.IN)
 
-# ==== Serielt mot Arduino ====
 SERIAL_PORT = "/dev/ttyACM0"
 BAUD_RATE = 115200
-
 try:
     ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
     time.sleep(2)
@@ -31,14 +28,12 @@ except Exception as e:
     print(f"Feil ved seriell tilkobling: {e}")
     ser = None
 
-# ==== Globale data ====
 sensor_data = {"left": 0.0, "mid": 0.0, "right": 0.0}
 ir_sensor_data = {"D1": 0, "D3": 0, "D4": 0, "D6": 0}
 battery_level = 78
-linje_status = "Søker etter linje"  # Gul
+linje_status = "Søker etter linje"
 navigasjon_aktiv = False
 
-# ==== Funksjoner ====
 def send_to_arduino(command):
     if ser and ser.is_open:
         ser.write((command + "\n").encode())
@@ -87,11 +82,11 @@ def read_serial_from_arduino():
             except Exception as e:
                 print(f"[SERIAL ERROR] {e}")
 
-# ==== Linjenavigasjon ====
 def linjenavigasjon():
     global linje_status, navigasjon_aktiv
     linje_status = "Søker etter linje"
-    siste_tid_linje = time.time()
+    siste_tid_linje = None
+    start_tid = time.time()
     navigasjon_aktiv = True
 
     while navigasjon_aktiv:
@@ -100,7 +95,7 @@ def linjenavigasjon():
         d1 = ir_sensor_data["D1"]
         d6 = ir_sensor_data["D6"]
 
-        MIN = 200  # Disse kan justeres senere via GUI
+        MIN = 200
         MAX = 600
 
         d3_detect = MIN <= d3 <= MAX
@@ -118,6 +113,7 @@ def linjenavigasjon():
                 send_to_arduino("MOV:X=0,Y=1,R=5")
             elif d4_detect and not d3_detect:
                 send_to_arduino("MOV:X=0,Y=1,R=-5")
+
         else:
             linje_status = "Søker etter linje"
             if d1_detect:
@@ -125,14 +121,22 @@ def linjenavigasjon():
             elif d6_detect:
                 send_to_arduino("MOV:X=0,Y=1,R=15")
 
-        # Fail-safe hvis linje borte > 2 sek
-        if time.time() - siste_tid_linje > 2:
+        # Sjekk 10 sek søk etter oppstart
+        if not siste_tid_linje and time.time() - start_tid > 10:
             send_to_arduino("MOV:X=0,Y=0,R=0")
             linje_status = "Ingen linje detektert"
+            navigasjon_aktiv = False
+            break
+
+        # Hvis tidligere detektert, men 5s uten ny linje
+        if siste_tid_linje and time.time() - siste_tid_linje > 5:
+            send_to_arduino("MOV:X=0,Y=0,R=0")
+            linje_status = "Ingen linje detektert"
+            navigasjon_aktiv = False
+            break
 
         time.sleep(0.25)
 
-# ==== Flask-server ====
 app = Flask(__name__)
 
 @app.route("/")
