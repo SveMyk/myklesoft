@@ -45,7 +45,7 @@
         .value {
             font-size: 1.5em;
         }
-        .range-box {
+        .range-box, .control-box {
             margin-top: 30px;
             font-size: 1.1em;
         }
@@ -56,8 +56,8 @@
             text-align: center;
             margin: 0 10px;
         }
-        .btn-back {
-            margin: 40px auto;
+        .btn-back, .btn-start, .btn-stop {
+            margin: 20px 10px;
             padding: 12px 25px;
             font-size: 1.1rem;
             background-color: #003366;
@@ -66,9 +66,22 @@
             border-radius: 10px;
             cursor: pointer;
         }
-        .btn-back:hover {
+        .btn-back:hover, .btn-start:hover, .btn-stop:hover {
             background-color: #005f99;
         }
+        .status-box {
+            margin-top: 30px;
+            padding: 15px;
+            font-size: 1.3em;
+            border-radius: 10px;
+            width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+            font-weight: bold;
+        }
+        .status-green { background-color: #28a745; color: white; }
+        .status-yellow { background-color: #ffc107; color: black; }
+        .status-red { background-color: #dc3545; color: white; }
     </style>
 </head>
 <body>
@@ -104,38 +117,68 @@
         <input type="number" id="maxValue" value="600">
     </div>
 
+    <div class="control-box">
+        <button class="btn-start" onclick="startNavigation()">Start linjenavigasjon</button>
+        <button class="btn-stop" onclick="stopNavigation()">Stopp linjenavigasjon</button>
+    </div>
+
+    <div class="status-box status-yellow" id="statusBox">Søker etter linje...</div>
+
     <button class="btn-back" onclick="location.href='/'">Tilbake til hovedmeny</button>
 
     <script>
         async function fetchIRData() {
+            const min = parseInt(document.getElementById('minValue').value);
+            const max = parseInt(document.getElementById('maxValue').value);
+
             try {
                 const response = await fetch('/ir_data');
                 const data = await response.json();
-
-                const min = parseInt(document.getElementById('minValue').value);
-                const max = parseInt(document.getElementById('maxValue').value);
-
-                ['D1', 'D3', 'D4', 'D6'].forEach(sensor => {
-                    const value = data[sensor];
-                    const valueBox = document.getElementById(`val-${sensor}`);
+                ['D1','D3','D4','D6'].forEach(sensor => {
+                    const val = data[sensor];
+                    document.getElementById(`val-${sensor}`).textContent = val;
                     const box = document.getElementById(sensor);
-
-                    valueBox.textContent = value;
-
-                    if (value >= min && value <= max) {
+                    if (val >= min && val <= max) {
                         box.classList.add('active');
                     } else {
                         box.classList.remove('active');
                     }
                 });
-
-            } catch (err) {
-                console.error('Feil ved henting av IR-data:', err);
+            } catch (e) {
+                console.error("Feil ved henting av IR-data:", e);
             }
         }
 
-        setInterval(fetchIRData, 500); // Oppdatering hvert 0.5s
-        fetchIRData(); // Første kall
+        async function fetchStatus() {
+            try {
+                const res = await fetch('/linje_status');
+                const data = await res.json();
+                const box = document.getElementById("statusBox");
+                const status = data.status;
+                box.textContent = status;
+
+                box.classList.remove("status-red", "status-yellow", "status-green");
+                if (status === "Ingen linje detektert") box.classList.add("status-red");
+                else if (status === "Søker etter linje") box.classList.add("status-yellow");
+                else box.classList.add("status-green");
+
+            } catch (e) {
+                console.error("Feil ved henting av status:", e);
+            }
+        }
+
+        function startNavigation() {
+            fetch('/start_linjenavigasjon');
+        }
+
+        function stopNavigation() {
+            fetch('/stop_linjenavigasjon');
+        }
+
+        setInterval(fetchIRData, 500);
+        setInterval(fetchStatus, 1000);
+        fetchIRData();
+        fetchStatus();
     </script>
 </body>
 </html>
