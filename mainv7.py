@@ -3,9 +3,26 @@ import serial
 import time
 import os
 import threading
+import json
 import RPi.GPIO as GPIO
 
-# Sensoroppsett for HC-SR04
+# --- Konfigurasjonsfil for sensorinnstillinger
+settings_file = "sensor_settings.json"
+
+def load_settings():
+    try:
+        with open(settings_file, "r") as f:
+            return json.load(f)
+    except:
+        return {"ultra_threshold": 20, "ultra_reduce": 40, "ir_min": 200, "ir_max": 600}
+
+def save_settings(data):
+    with open(settings_file, "w") as f:
+        json.dump(data, f)
+
+sensor_settings = load_settings()
+
+# --- Sensoroppsett for HC-SR04
 SENSORS = {
     "left": {"TRIG": 17, "ECHO": 27},
     "mid": {"TRIG": 22, "ECHO": 23},
@@ -18,7 +35,7 @@ for sensor in SENSORS.values():
     GPIO.setup(sensor["TRIG"], GPIO.OUT)
     GPIO.setup(sensor["ECHO"], GPIO.IN)
 
-# Seriell tilkobling til Arduino
+# --- Seriell tilkobling til Arduino
 SERIAL_PORT = "/dev/ttyACM0"
 BAUD_RATE = 115200
 try:
@@ -95,8 +112,8 @@ def linjenavigasjon():
         d1 = ir_sensor_data["D1"]
         d6 = ir_sensor_data["D6"]
 
-        MIN = 200
-        MAX = 600
+        MIN = sensor_settings["ir_min"]
+        MAX = sensor_settings["ir_max"]
 
         d3_detect = MIN <= d3 <= MAX
         d4_detect = MIN <= d4 <= MAX
@@ -146,6 +163,19 @@ def line(): return render_template("linjenavigasjon.html")
 
 @app.route("/auto")
 def auto(): return render_template("autonom.html")
+
+@app.route("/settings")
+def settings(): return render_template("settings.html")
+
+@app.route("/save_settings", methods=["POST"])
+def save_sensor_settings():
+    global sensor_settings
+    data = request.get_json()
+    if data:
+        sensor_settings = data
+        save_settings(sensor_settings)
+        return "Innstillinger lagret."
+    return "Ingen data mottatt."
 
 @app.route("/control")
 def control():
