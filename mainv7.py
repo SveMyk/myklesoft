@@ -222,6 +222,10 @@ def reboot():
     threading.Thread(target=delayed_reboot, daemon=True).start()
     return "Raspberry Pi vil starte på nytt om få sekunder."
 
+@app.route("/settings_data")
+def settings_data():
+    return jsonify(sensor_settings)
+
 if __name__ == "__main__":
     threading.Thread(target=update_sensor_data, daemon=True).start()
     threading.Thread(target=read_serial_from_arduino, daemon=True).start()
