@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensorinnstillinger – GASSO</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #003366;
+        }
+        .form-section {
+            background-color: #fff;
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 500px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        input[type="number"] {
+            padding: 10px;
+            width: 80%;
+            font-size: 1rem;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .btn {
+            margin-top: 20px;
+            padding: 12px 20px;
+            font-size: 1rem;
+            background-color: #003366;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #005f99;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sensorinnstillinger</h1>
+    <div class="form-section">
+        <form id="settingsForm">
+            <label for="ultra_threshold">Ultralydgrense (cm – stoppverdi):</label>
+            <input type="number" id="ultra_threshold" name="ultra_threshold" min="5" max="100" value="20">
+
+            <label for="ultra_reduce">Reduksjonsgrense (cm – lav hastighet):</label>
+            <input type="number" id="ultra_reduce" name="ultra_reduce" min="5" max="100" value="40">
+
+            <label for="ir_min">IR Terskel – Minimumsverdi:</label>
+            <input type="number" id="ir_min" name="ir_min" min="0" max="1023" value="200">
+
+            <label for="ir_max">IR Terskel – Maksimumsverdi:</label>
+            <input type="number" id="ir_max" name="ir_max" min="0" max="1023" value="600">
+
+            <button type="submit" class="btn">Lagre innstillinger</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById("settingsForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+
+            const payload = {
+                ultra_threshold: parseInt(document.getElementById("ultra_threshold").value),
+                ultra_reduce: parseInt(document.getElementById("ultra_reduce").value),
+                ir_min: parseInt(document.getElementById("ir_min").value),
+                ir_max: parseInt(document.getElementById("ir_max").value)
+            };
+
+            fetch("/save_settings", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.text())
+            .then(data => alert("Innstillinger lagret!"))
+            .catch(error => alert("Feil ved lagring: " + error));
+        });
+    </script>
+</body>
+</html>
