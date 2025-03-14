@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GASSO - Manuell Kontroll</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; text-align: center; }
+    header { background-color: #00cfe8; padding: 20px; }
+    header img { height: 160px; }
+    .battery { margin-top: 10px; font-size: 1.1rem; color: #003366; }
+    .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; max-width: 800px; margin: 20px auto; }
+    button { padding: 18px; font-size: 16px; border-radius: 10px; border: none; background-color: #003366; color: #fff; cursor: pointer; }
+    button:hover { background-color: #005f99; }
+    .sensor-bar { width: 20px; height: 100px; margin: auto; display: flex; align-items: flex-end; justify-content: center; }
+    .bar { width: 100%; border-radius: 4px; }
+    .sensor-data { display: flex; justify-content: space-around; margin-top: 30px; padding: 20px; background: #fff; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 700px; margin-left: auto; margin-right: auto; }
+    .sensor-block { text-align: center; }
+    #status { margin-top: 20px; font-weight: bold; }
+    .btn-back { margin: 30px auto; padding: 12px 25px; font-size: 1rem; background-color: #003366; color: #fff; border-radius: 8px; border: none; cursor: pointer; }
+    .btn-back:hover { background-color: #005f99; }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="/static/gasso_logo.png" alt="GASSO Logo">
+    <div class="battery">Batteristatus: <span id="batteryLevel">Loading...</span></div>
+  </header>
+
+  <div class="grid">
+    <button onclick="sendCommand(0,0,-135)">↺ 135°</button>
+    <button onclick="sendCommand(0,0,-90)">↺ 90°</button>
+    <button onclick="sendCommand(0,0,-45)">↺ 45°</button>
+    <button onclick="sendCommand(0,0,45)">↻ 45°</button>
+    <button onclick="sendCommand(0,0,90)">↻ 90°</button>
+
+    <button onmousedown="sendCommand(1,1,0)" onmouseup="sendStop()">↖ Skrå VF</button>
+    <button onmousedown="sendCommand(0,1,0)" onmouseup="sendStop()">← Venstre</button>
+    <button onmousedown="sendCommand(-1,1,0)" onmouseup="sendStop()">↙ Skrå VB</button>
+    <button onclick="sendCommand(0,0,0)">■ STOPP</button>
+    <button onmousedown="sendCommand(1,-1,0)" onmouseup="sendStop()">↗ Skrå HF</button>
+
+    <button onmousedown="sendCommand(1,0,0)" onmouseup="sendStop()">↑ Frem</button>
+    <button></button>
+    <button onmousedown="sendCommand(-1,0,0)" onmouseup="sendStop()">↓ Bak</button>
+    <button></button>
+    <button onmousedown="sendCommand(-1,-1,0)" onmouseup="sendStop()">↘ Skrå HB</button>
+  </div>
+
+  <div id="status">Klar for kommando</div>
+
+  <div class="sensor-data">
+    <div class="sensor-block">
+      <div id="leftBar" class="sensor-bar"><div class="bar" style="height:10px;background:#ccc"></div></div>
+      <div id="leftLabel">Venstre: -- cm</div>
+    </div>
+    <div class="sensor-block">
+      <div id="midBar" class="sensor-bar"><div class="bar" style="height:10px;background:#ccc"></div></div>
+      <div id="midLabel">Senter: -- cm</div>
+    </div>
+    <div class="sensor-block">
+      <div id="rightBar" class="sensor-bar"><div class="bar" style="height:10px;background:#ccc"></div></div>
+      <div id="rightLabel">Høyre: -- cm</div>
+    </div>
+  </div>
+
+  <button class="btn-back" onclick="location.href='/'">Tilbake</button>
+<button class="btn-back" onclick="location.href='/settings'">Sensorinnstillinger</button>
+
+  <script>
+    let settings = { ultra_reduce: 40, ultra_threshold: 20 };
+
+    async function fetchBattery() {
+      try {
+        const response = await fetch('/battery');
+        const data = await response.json();
+        document.getElementById('batteryLevel').innerText = data.level + '%';
+      } catch {
+        document.getElementById('batteryLevel').innerText = 'Ukjent';
+      }
+    }
+
+    async function fetchSettings() {
+      try {
+        const res = await fetch('/settings_data');
+        settings = await res.json();
+      } catch {}
+    }
+
+    async function fetchSensors() {
+      try {
+        const response = await fetch('/sensors');
+        const data = await response.json();
+        updateSensors(data);
+      } catch {}
+    }
+
+    function sendCommand(x, y, r) {
+      const url = `/control?cmd=MOV:X=${x},Y=${y},R=${r}`;
+      fetch(url)
+        .then(r => r.text())
+        .then(data => document.getElementById("status").innerText = data);
+    }
+
+    function sendStop() { sendCommand(0, 0, 0); }
+
+    function updateSensors(data) {
+      ['left','mid','right'].forEach(id => {
+        const cm = data[id];
+        let color = '#4caf50';
+        if (cm <= settings.ultra_threshold) color = '#e53935';
+        else if (cm <= settings.ultra_reduce) color = '#fbc02d';
+        const height = Math.min(cm * 2, 100);
+        const bar = document.querySelector(`#${id}Bar .bar`);
+        bar.style.height = height + 'px';
+        bar.style.backgroundColor = color;
+        document.getElementById(`${id}Label`).innerText = `${id.charAt(0).toUpperCase() + id.slice(1)}: ${cm} cm`;
+      });
+    }
+
+    fetchBattery();
+    fetchSettings();
+    setInterval(fetchSensors, 300);
+  </script>
+</body>
+</html>
