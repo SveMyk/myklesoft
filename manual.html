@@ -28,27 +28,28 @@
   </header>
 
   <div class="grid">
-    <button onclick="sendCommand(0,0,-135)">↺ 135°</button>
-    <button onclick="sendCommand(0,0,-90)">↺ 90°</button>
-    <button onclick="sendCommand(0,0,-45)">↺ 45°</button>
-    <button onclick="sendCommand(0,0,45)">↻ 45°</button>
-    <button onclick="sendCommand(0,0,90)">↻ 90°</button>
+  <button onclick="sendCommand(0,0,-45)">Roter 45 grader</button>
+  <button onmousedown="sendCommand(1,1,0)" onmouseup="sendStop()">Skrå VF</button>
+  <button onmousedown="sendCommand(1,0,0)" onmouseup="sendStop()">Frem</button>
+  <button onmousedown="sendCommand(1,-1,0)" onmouseup="sendStop()">Skrå HF</button>
+  <button onclick="sendCommand(0,0,45)">Roter 45 grader</button>
 
-    <button onmousedown="sendCommand(1,1,0)" onmouseup="sendStop()">↖ Skrå VF</button>
-    <button onmousedown="sendCommand(0,1,0)" onmouseup="sendStop()">← Venstre</button>
-    <button onmousedown="sendCommand(-1,1,0)" onmouseup="sendStop()">↙ Skrå VB</button>
-    <button onclick="sendCommand(0,0,0)">■ STOPP</button>
-    <button onmousedown="sendCommand(1,-1,0)" onmouseup="sendStop()">↗ Skrå HF</button>
+  <button onclick="sendCommand(0,0,-90)">Roter 90 grader</button>
+  <button onmousedown="sendCommand(0,1,0)" onmouseup="sendStop()">Venstre</button>
+  <button onclick="sendCommand(0,0,0)">Stopp</button>
+  <button onmousedown="sendCommand(0,-1,0)" onmouseup="sendStop()">Høyre</button>
+  <button onclick="sendCommand(0,0,90)">Roter 90 grader</button>
 
-    <button onmousedown="sendCommand(1,0,0)" onmouseup="sendStop()">↑ Frem</button>
-    <button></button>
-    <button onmousedown="sendCommand(-1,0,0)" onmouseup="sendStop()">↓ Bak</button>
-    <button></button>
-    <button onmousedown="sendCommand(-1,-1,0)" onmouseup="sendStop()">↘ Skrå HB</button>
-  </div>
+  <button onclick="sendCommand(0,0,-135)">Roter 135 grader</button>
+  <button onmousedown="sendCommand(-1,1,0)" onmouseup="sendStop()">Skrå VB</button>
+  <button onmousedown="sendCommand(-1,0,0)" onmouseup="sendStop()">Bak</button>
+  <button onmousedown="sendCommand(-1,-1,0)" onmouseup="sendStop()">Skrå HB</button>
+  <button onclick="sendCommand(0,0,135)">Roter 135 grader</button>
+</div>
 
   <div id="status">Klar for kommando</div>
 
+  <h2 style="margin-top: 40px; color: #003366;">Ultralyd avstandssensorer</h2>
   <div class="sensor-data">
     <div class="sensor-block">
       <div id="leftBar" class="sensor-bar"><div class="bar" style="height:10px;background:#ccc"></div></div>
@@ -114,7 +115,7 @@
         const bar = document.querySelector(`#${id}Bar .bar`);
         bar.style.height = height + 'px';
         bar.style.backgroundColor = color;
-        document.getElementById(`${id}Label`).innerText = `${id.charAt(0).toUpperCase() + id.slice(1)}: ${cm} cm`;
+        document.getElementById(`${id}Label`).innerText = `${id === 'left' ? 'Venstre' : id === 'mid' ? 'Senter' : 'Høyre'}: ${cm} cm`;
       });
     }
 
