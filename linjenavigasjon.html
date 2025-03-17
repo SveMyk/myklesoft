@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GASSO - Linjenavigasjon</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+        header {
+            background-color: #00cfe8;
+            padding: 20px;
+        }
+        header img {
+            height: 180px;
+        }
+        .content {
+            margin-top: 40px;
+            font-size: 1.3rem;
+            color: #333;
+        }
+        .btn-back {
+            margin: 40px auto;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            background-color: #003366;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .btn-back:hover {
+            background-color: #005f99;
+        }
+        .sensor-box {
+            display: inline-block;
+            margin: 20px;
+            text-align: center;
+        }
+        .sensor-visual {
+            width: 100px;
+            height: 100px;
+            margin-top: 10px;
+            border: 1px solid #999;
+            border-radius: 6px;
+            background-color: #eee;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="/static/gasso_logo.png" alt="GASSO Logo">
+    </header>
+
+    <div class="content">
+        <h2>Visualisering av IR-sensorer</h2>
+        <div class="sensor-box">
+            <div>D1</div>
+            <div id="irD1Val">--</div>
+            <div class="sensor-visual" id="irD1Color"></div>
+        </div>
+        <div class="sensor-box">
+            <div>D3</div>
+            <div id="irD3Val">--</div>
+            <div class="sensor-visual" id="irD3Color"></div>
+        </div>
+        <div class="sensor-box">
+            <div>D4</div>
+            <div id="irD4Val">--</div>
+            <div class="sensor-visual" id="irD4Color"></div>
+        </div>
+        <div class="sensor-box">
+            <div>D6</div>
+            <div id="irD6Val">--</div>
+            <div class="sensor-visual" id="irD6Color"></div>
+        </div>
+    </div>
+
+    <button class="btn-back" onclick="location.href='/'">Tilbake til hovedmeny</button>
+
+    <script>
+        function irToGray(val) {
+            val = Math.min(1023, Math.max(0, val));
+            const gray = 255 - Math.floor((val / 1023) * 255);
+            return `rgb(${gray}, ${gray}, ${gray})`;
+        }
+
+        function updateIRView() {
+            fetch('/ir_data')
+                .then(res => res.json())
+                .then(data => {
+                    const sensors = ['D1', 'D3', 'D4', 'D6'];
+                    sensors.forEach(id => {
+                        const val = data[id];
+                        document.getElementById(`ir${id}Val`).innerText = `${val}`;
+                        document.getElementById(`ir${id}Color`).style.backgroundColor = irToGray(val);
+                    });
+                });
+        }
+
+        setInterval(updateIRView, 1000);
+    </script>
+</body>
+</html>
