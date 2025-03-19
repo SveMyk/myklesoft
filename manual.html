@@ -3,32 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GASSO - Manuell Kontroll (Kvadratknapper)</title>
+  <title>GASSO - Manuell Kontroll (Dynamiske knapper)</title>
   <style>
+    :root {
+      --button-size: 80px;
+      --symbol-size: 64px;
+    }
+
     body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; text-align: center; }
     header { background-color: #00cfe8; padding: 20px; }
     header img { height: 160px; }
     .battery { margin-top: 10px; font-size: 1.1rem; color: #003366; }
 
     .grid-container {
-      display: grid;
-      grid-template-columns: 1fr 3fr 1fr;
-      gap: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
       max-width: 800px;
       margin: 20px auto;
     }
 
     .controls {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      grid-template-rows: repeat(3, 1fr);
+      grid-template-columns: repeat(3, auto);
+      grid-template-rows: repeat(3, auto);
       gap: 10px;
+      justify-content: center;
+      align-items: center;
     }
 
-    button {
-      width: 70px;
-      height: 70px;
-      font-size: 30px;
+    button.control-btn {
+      width: var(--button-size);
+      height: var(--button-size);
+      font-size: var(--symbol-size);
       border-radius: 10px;
       border: none;
       background-color: #003366;
@@ -39,13 +48,41 @@
       justify-content: center;
     }
 
-    button:hover { background-color: #005f99; }
-    .rotate-btn { writing-mode: vertical-rl; text-orientation: upright; font-size: 24px; width: 50px; height: 230px; }
+    button.control-btn:hover { background-color: #005f99; }
+    .rotate-btn {
+      writing-mode: vertical-rl;
+      text-orientation: upright;
+      font-size: calc(var(--symbol-size) - 10px);
+      width: calc(var(--button-size) - 10px);
+      height: calc(var(--button-size) * 3);
+      border-radius: 15px;
+      background-color: #003366;
+      color: white;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .rotate-btn:hover { background-color: #005f99; }
     .stop-btn { background-color: #cc0000 !important; }
 
-    #status { margin-top: 20px; font-weight: bold; }
+    #status { margin-top: 20px; font-weight: bold; font-size: 1.2rem; color: #003366; }
 
-    .btn-back { margin: 30px auto; padding: 12px 25px; font-size: 1rem; background-color: #003366; color: #fff; border-radius: 8px; border: none; cursor: pointer; }
+    .btn-back {
+      min-width: 140px;
+      height: auto;
+      padding: 12px 24px;
+      font-size: 1rem;
+      background-color: #003366;
+      color: #fff;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      margin: 10px auto;
+      display: block;
+    }
     .btn-back:hover { background-color: #005f99; }
 
     .sensor-data {
@@ -60,8 +97,8 @@
       margin-left: auto;
       margin-right: auto;
     }
-    .sensor-bar { width: 20px; height: 100px; margin: auto; display: flex; align-items: flex-end; justify-content: center; }
-    .bar { width: 100%; border-radius: 4px; }
+    .sensor-bar { width: 30px; height: 120px; margin: auto; display: flex; align-items: flex-end; justify-content: center; }
+    .bar { width: 100%; border-radius: 6px; }
     .sensor-block { text-align: center; }
   </style>
 </head>
@@ -74,15 +111,15 @@
   <div class="grid-container">
     <button class="rotate-btn" onmousedown="sendCommand(0,0,-1)" onmouseup="sendStop()">↺</button>
     <div class="controls">
-      <button onmousedown="sendCommand(1,1,0)" onmouseup="sendStop()">↖</button>
-      <button onmousedown="sendCommand(1,0,0)" onmouseup="sendStop()">↑</button>
-      <button onmousedown="sendCommand(1,-1,0)" onmouseup="sendStop()">↗</button>
-      <button onmousedown="sendCommand(0,1,0)" onmouseup="sendStop()">←</button>
-      <button class="stop-btn" onmousedown="sendStop()">■</button>
-      <button onmousedown="sendCommand(0,-1,0)" onmouseup="sendStop()">→</button>
-      <button onmousedown="sendCommand(-1,1,0)" onmouseup="sendStop()">↙</button>
-      <button onmousedown="sendCommand(-1,0,0)" onmouseup="sendStop()">↓</button>
-      <button onmousedown="sendCommand(-1,-1,0)" onmouseup="sendStop()">↘</button>
+      <button class="control-btn" onmousedown="sendCommand(1,1,0)" onmouseup="sendStop()">↖</button>
+      <button class="control-btn" onmousedown="sendCommand(1,0,0)" onmouseup="sendStop()">↑</button>
+      <button class="control-btn" onmousedown="sendCommand(1,-1,0)" onmouseup="sendStop()">↗</button>
+      <button class="control-btn" onmousedown="sendCommand(0,1,0)" onmouseup="sendStop()">←</button>
+      <button class="control-btn stop-btn" onmousedown="sendStop()">■</button>
+      <button class="control-btn" onmousedown="sendCommand(0,-1,0)" onmouseup="sendStop()">→</button>
+      <button class="control-btn" onmousedown="sendCommand(-1,1,0)" onmouseup="sendStop()">↙</button>
+      <button class="control-btn" onmousedown="sendCommand(-1,0,0)" onmouseup="sendStop()">↓</button>
+      <button class="control-btn" onmousedown="sendCommand(-1,-1,0)" onmouseup="sendStop()">↘</button>
     </div>
     <button class="rotate-btn" onmousedown="sendCommand(0,0,1)" onmouseup="sendStop()">↻</button>
   </div>
