@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GASSO - Manuell Kontroll</title>
+  <title>GASSO - Manuell Kontroll (Kvadratknapper)</title>
   <style>
     body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; text-align: center; }
     header { background-color: #00cfe8; padding: 20px; }
@@ -26,8 +26,9 @@
     }
 
     button {
-      padding: 15px;
-      font-size: 20px;
+      width: 70px;
+      height: 70px;
+      font-size: 30px;
       border-radius: 10px;
       border: none;
       background-color: #003366;
@@ -39,9 +40,9 @@
     }
 
     button:hover { background-color: #005f99; }
-    .rotate-btn { writing-mode: vertical-rl; text-orientation: upright; font-size: 18px; padding: 60px 10px; }
+    .rotate-btn { writing-mode: vertical-rl; text-orientation: upright; font-size: 24px; width: 50px; height: 230px; }
     .stop-btn { background-color: #cc0000 !important; }
-    .icon { width: 25px; height: 25px; fill: white; }
+
     #status { margin-top: 20px; font-weight: bold; }
 
     .btn-back { margin: 30px auto; padding: 12px 25px; font-size: 1rem; background-color: #003366; color: #fff; border-radius: 8px; border: none; cursor: pointer; }
@@ -71,19 +72,19 @@
   </header>
 
   <div class="grid-container">
-    <button class="rotate-btn" onmousedown="sendCommand(0,0,-1)" onmouseup="sendStop()">&#x21ba;</button>
+    <button class="rotate-btn" onmousedown="sendCommand(0,0,-1)" onmouseup="sendStop()">↺</button>
     <div class="controls">
-      <button onmousedown="sendCommand(1,1,0)" onmouseup="sendStop()">&#x2196;</button>
-      <button onmousedown="sendCommand(1,0,0)" onmouseup="sendStop()">&#x2191;</button>
-      <button onmousedown="sendCommand(1,-1,0)" onmouseup="sendStop()">&#x2197;</button>
-      <button onmousedown="sendCommand(0,1,0)" onmouseup="sendStop()">&#x2190;</button>
-      <button class="stop-btn" onmousedown="sendStop()">&#9632;</button>
-      <button onmousedown="sendCommand(0,-1,0)" onmouseup="sendStop()">&#x2192;</button>
-      <button onmousedown="sendCommand(-1,1,0)" onmouseup="sendStop()">&#x2199;</button>
-      <button onmousedown="sendCommand(-1,0,0)" onmouseup="sendStop()">&#x2193;</button>
-      <button onmousedown="sendCommand(-1,-1,0)" onmouseup="sendStop()">&#x2198;</button>
+      <button onmousedown="sendCommand(1,1,0)" onmouseup="sendStop()">↖</button>
+      <button onmousedown="sendCommand(1,0,0)" onmouseup="sendStop()">↑</button>
+      <button onmousedown="sendCommand(1,-1,0)" onmouseup="sendStop()">↗</button>
+      <button onmousedown="sendCommand(0,1,0)" onmouseup="sendStop()">←</button>
+      <button class="stop-btn" onmousedown="sendStop()">■</button>
+      <button onmousedown="sendCommand(0,-1,0)" onmouseup="sendStop()">→</button>
+      <button onmousedown="sendCommand(-1,1,0)" onmouseup="sendStop()">↙</button>
+      <button onmousedown="sendCommand(-1,0,0)" onmouseup="sendStop()">↓</button>
+      <button onmousedown="sendCommand(-1,-1,0)" onmouseup="sendStop()">↘</button>
     </div>
-    <button class="rotate-btn" onmousedown="sendCommand(0,0,1)" onmouseup="sendStop()">&#x21bb;</button>
+    <button class="rotate-btn" onmousedown="sendCommand(0,0,1)" onmouseup="sendStop()">↻</button>
   </div>
 
   <div id="status">Klar for kommando</div>
@@ -152,6 +153,7 @@
     }
 
     fetchBattery();
+    fetchSensors();
     setInterval(fetchSensors, 300);
   </script>
 </body>
