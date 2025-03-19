@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GASSO - Manuell Kontroll</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; text-align: center; }
+    header { background-color: #00cfe8; padding: 20px; }
+    header img { height: 160px; }
+    .battery { margin-top: 10px; font-size: 1.1rem; color: #003366; }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: 1fr 3fr 1fr;
+      gap: 10px;
+      max-width: 800px;
+      margin: 20px auto;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    button {
+      padding: 20px;
+      font-size: 20px;
+      border-radius: 10px;
+      border: none;
+      background-color: #003366;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button:hover { background-color: #005f99; }
+    
+    .rotate-btn {
+      writing-mode: vertical-rl;
+      text-orientation: upright;
+      font-size: 18px;
+      padding: 60px 10px;
+    }
+
+    .icon {
+      width: 30px;
+      height: 30px;
+      fill: white;
+    }
+
+    #status { margin-top: 20px; font-weight: bold; }
+
+    .btn-back { margin: 30px auto; padding: 12px 25px; font-size: 1rem; background-color: #003366; color: #fff; border-radius: 8px; border: none; cursor: pointer; }
+    .btn-back:hover { background-color: #005f99; }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="/static/gasso_logo.png" alt="GASSO Logo">
+    <div class="battery">Batteristatus: <span id="batteryLevel">Loading...</span></div>
+  </header>
+
+  <div class="grid-container">
+    <!-- Venstre roter-knapp -->
+    <button class="rotate-btn" onmousedown="sendCommand(0,0,-1)" onmouseup="sendStop()">↺</button>
+    
+    <!-- Bevegelseskontroller -->
+    <div class="controls">
+      <div></div>
+      <button onmousedown="sendCommand(1,0,0)" onmouseup="sendStop()">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M12 2L3 20h18L12 2z"/></svg>
+      </button>
+      <div></div>
+
+      <button onmousedown="sendCommand(1,-1,0)" onmouseup="sendStop()">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M2 12l18 9V3L2 12z"/></svg>
+      </button>
+      <button onmousedown="sendCommand(0,0,0)" onmouseup="sendStop()">■</button>
+      <button onmousedown="sendCommand(1,1,0)" onmouseup="sendStop()">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M22 12L4 3v18l18-9z"/></svg>
+      </button>
+
+      <div></div>
+      <button onmousedown="sendCommand(-1,0,0)" onmouseup="sendStop()">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M12 22L3 4h18l-9 18z"/></svg>
+      </button>
+      <div></div>
+    </div>
+
+    <!-- Høyre roter-knapp -->
+    <button class="rotate-btn" onmousedown="sendCommand(0,0,1)" onmouseup="sendStop()">↻</button>
+  </div>
+
+  <div id="status">Klar for kommando</div>
+
+  <h2 style="margin-top: 40px; color: #003366;">Ultralyd avstandssensorer</h2>
+  <div class="sensor-data">
+    <div class="sensor-block">
+      <div id="leftLabel">Venstre: -- cm</div>
+    </div>
+    <div class="sensor-block">
+      <div id="midLabel">Senter: -- cm</div>
+    </div>
+    <div class="sensor-block">
+      <div id="rightLabel">Høyre: -- cm</div>
+    </div>
+  </div>
+
+  <button class="btn-back" onclick="location.href='/'">Tilbake</button>
+  <button class="btn-back" onclick="location.href='/settings'">Sensorinnstillinger</button>
+
+  <script>
+    async function fetchBattery() {
+      try {
+        const response = await fetch('/battery');
+        const data = await response.json();
+        document.getElementById('batteryLevel').innerText = data.level + '%';
+      } catch {
+        document.getElementById('batteryLevel').innerText = 'Ukjent';
+      }
+    }
+
+    function sendCommand(x, y, r) {
+      const url = `/control?cmd=MOV:X=${x},Y=${y},R=${r}`;
+      fetch(url)
+        .then(r => r.text())
+        .then(data => document.getElementById("status").innerText = data);
+    }
+
+    function sendStop() { sendCommand(0, 0, 0); }
+
+    fetchBattery();
+  </script>
+</body>
+</html>
