@@ -1,4 +1,3 @@
-<!-- Oppdatert linjenavigasjon med ny logikk for status og timer -->
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -6,7 +5,89 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GASSO - Linjenavigasjon</title>
   <style>
-    /* ... eksisterende CSS beholdes ... */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #00cfe8;
+      padding: 20px;
+    }
+    header img {
+      height: 160px;
+      max-width: 100%;
+      height: auto;
+    }
+    h1 { margin-top: 20px; color: #003366; font-size: 2rem; }
+    h2 { color: #003366; margin-top: 20px; }
+
+    .sensor-container {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin: 20px auto 0;
+      flex-wrap: wrap;
+    }
+    .sensor-box {
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      width: 150px;
+      transition: background-color 0.3s;
+    }
+    .sensor-box.active {
+      background-color: #008cff;
+      color: white;
+    }
+    .sensor-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .value {
+      font-size: 1.5em;
+    }
+    .sensor-visual {
+      width: 100px;
+      height: 100px;
+      margin-top: 10px;
+      border: 1px solid #999;
+      border-radius: 6px;
+      background-color: #eee;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .control-box {
+      margin-top: 30px;
+    }
+    .btn {
+      margin: 15px 10px;
+      padding: 12px 25px;
+      font-size: 1.1rem;
+      background-color: #003366;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #005f99;
+    }
+    .status-box {
+      margin: 30px auto 10px;
+      padding: 15px;
+      font-size: 1.3em;
+      border-radius: 10px;
+      width: 320px;
+      font-weight: bold;
+      display: none;
+    }
+    .status-green { background-color: #28a745; color: white; }
+    .status-yellow { background-color: #ffc107; color: black; }
+    .status-red { background-color: #dc3545; color: white; }
   </style>
 </head>
 <body>
@@ -19,7 +100,26 @@
 
   <h2>Sensorvisning</h2>
   <div class="sensor-container">
-    <!-- sensorboksene beholdes uendret -->
+    <div class="sensor-box" id="D1">
+      <div class="sensor-title">Sensor D1</div>
+      <div class="value" id="val-D1">...</div>
+      <div class="sensor-visual" id="irD1Color"></div>
+    </div>
+    <div class="sensor-box" id="D3">
+      <div class="sensor-title">Sensor D3</div>
+      <div class="value" id="val-D3">...</div>
+      <div class="sensor-visual" id="irD3Color"></div>
+    </div>
+    <div class="sensor-box" id="D4">
+      <div class="sensor-title">Sensor D4</div>
+      <div class="value" id="val-D4">...</div>
+      <div class="sensor-visual" id="irD4Color"></div>
+    </div>
+    <div class="sensor-box" id="D6">
+      <div class="sensor-title">Sensor D6</div>
+      <div class="value" id="val-D6">...</div>
+      <div class="sensor-visual" id="irD6Color"></div>
+    </div>
   </div>
 
   <div class="control-box">
@@ -35,11 +135,13 @@
     let timerInterval;
     let searching = false;
     let lastStatus = "";
+    let settings = {};
 
     async function fetchSettings() {
       const res = await fetch('/settings_data');
       const data = await res.json();
       timerSeconds = data.linje_timeout || 10;
+      settings.linje_timeout = timerSeconds;
     }
 
     async function fetchIRData() {
@@ -120,8 +222,7 @@
       }, 1000);
     }
 
-    let settings = {};
-    fetchSettings().then(() => { settings.linje_timeout = timerSeconds; });
+    fetchSettings();
     fetchIRData();
     setInterval(fetchIRData, 500);
   </script>
