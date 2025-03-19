@@ -21,11 +21,12 @@
     .controls {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
       gap: 10px;
     }
 
     button {
-      padding: 20px;
+      padding: 15px;
       font-size: 20px;
       border-radius: 10px;
       border: none;
@@ -38,24 +39,29 @@
     }
 
     button:hover { background-color: #005f99; }
-    
-    .rotate-btn {
-      writing-mode: vertical-rl;
-      text-orientation: upright;
-      font-size: 18px;
-      padding: 60px 10px;
-    }
-
-    .icon {
-      width: 30px;
-      height: 30px;
-      fill: white;
-    }
-
+    .rotate-btn { writing-mode: vertical-rl; text-orientation: upright; font-size: 18px; padding: 60px 10px; }
+    .stop-btn { background-color: #cc0000 !important; }
+    .icon { width: 25px; height: 25px; fill: white; }
     #status { margin-top: 20px; font-weight: bold; }
 
     .btn-back { margin: 30px auto; padding: 12px 25px; font-size: 1rem; background-color: #003366; color: #fff; border-radius: 8px; border: none; cursor: pointer; }
     .btn-back:hover { background-color: #005f99; }
+
+    .sensor-data {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 30px;
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .sensor-bar { width: 20px; height: 100px; margin: auto; display: flex; align-items: flex-end; justify-content: center; }
+    .bar { width: 100%; border-radius: 4px; }
+    .sensor-block { text-align: center; }
   </style>
 </head>
 <body>
@@ -65,34 +71,19 @@
   </header>
 
   <div class="grid-container">
-    <!-- Venstre roter-knapp -->
-    <button class="rotate-btn" onmousedown="sendCommand(0,0,-1)" onmouseup="sendStop()">↺</button>
-    
-    <!-- Bevegelseskontroller -->
+    <button class="rotate-btn" onmousedown="sendCommand(0,0,-1)" onmouseup="sendStop()">&#x21ba;</button>
     <div class="controls">
-      <div></div>
-      <button onmousedown="sendCommand(1,0,0)" onmouseup="sendStop()">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M12 2L3 20h18L12 2z"/></svg>
-      </button>
-      <div></div>
-
-      <button onmousedown="sendCommand(1,-1,0)" onmouseup="sendStop()">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M2 12l18 9V3L2 12z"/></svg>
-      </button>
-      <button onmousedown="sendCommand(0,0,0)" onmouseup="sendStop()">■</button>
-      <button onmousedown="sendCommand(1,1,0)" onmouseup="sendStop()">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M22 12L4 3v18l18-9z"/></svg>
-      </button>
-
-      <div></div>
-      <button onmousedown="sendCommand(-1,0,0)" onmouseup="sendStop()">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M12 22L3 4h18l-9 18z"/></svg>
-      </button>
-      <div></div>
+      <button onmousedown="sendCommand(1,1,0)" onmouseup="sendStop()">&#x2196;</button>
+      <button onmousedown="sendCommand(1,0,0)" onmouseup="sendStop()">&#x2191;</button>
+      <button onmousedown="sendCommand(1,-1,0)" onmouseup="sendStop()">&#x2197;</button>
+      <button onmousedown="sendCommand(0,1,0)" onmouseup="sendStop()">&#x2190;</button>
+      <button class="stop-btn" onmousedown="sendStop()">&#9632;</button>
+      <button onmousedown="sendCommand(0,-1,0)" onmouseup="sendStop()">&#x2192;</button>
+      <button onmousedown="sendCommand(-1,1,0)" onmouseup="sendStop()">&#x2199;</button>
+      <button onmousedown="sendCommand(-1,0,0)" onmouseup="sendStop()">&#x2193;</button>
+      <button onmousedown="sendCommand(-1,-1,0)" onmouseup="sendStop()">&#x2198;</button>
     </div>
-
-    <!-- Høyre roter-knapp -->
-    <button class="rotate-btn" onmousedown="sendCommand(0,0,1)" onmouseup="sendStop()">↻</button>
+    <button class="rotate-btn" onmousedown="sendCommand(0,0,1)" onmouseup="sendStop()">&#x21bb;</button>
   </div>
 
   <div id="status">Klar for kommando</div>
@@ -100,12 +91,15 @@
   <h2 style="margin-top: 40px; color: #003366;">Ultralyd avstandssensorer</h2>
   <div class="sensor-data">
     <div class="sensor-block">
+      <div id="leftBar" class="sensor-bar"><div class="bar" style="height:10px;background:#ccc"></div></div>
       <div id="leftLabel">Venstre: -- cm</div>
     </div>
     <div class="sensor-block">
+      <div id="midBar" class="sensor-bar"><div class="bar" style="height:10px;background:#ccc"></div></div>
       <div id="midLabel">Senter: -- cm</div>
     </div>
     <div class="sensor-block">
+      <div id="rightBar" class="sensor-bar"><div class="bar" style="height:10px;background:#ccc"></div></div>
       <div id="rightLabel">Høyre: -- cm</div>
     </div>
   </div>
@@ -114,6 +108,8 @@
   <button class="btn-back" onclick="location.href='/settings'">Sensorinnstillinger</button>
 
   <script>
+    let settings = { ultra_reduce: 40, ultra_threshold: 20 };
+
     async function fetchBattery() {
       try {
         const response = await fetch('/battery');
@@ -122,6 +118,14 @@
       } catch {
         document.getElementById('batteryLevel').innerText = 'Ukjent';
       }
+    }
+
+    async function fetchSensors() {
+      try {
+        const response = await fetch('/sensors');
+        const data = await response.json();
+        updateSensors(data);
+      } catch {}
     }
 
     function sendCommand(x, y, r) {
@@ -133,7 +137,22 @@
 
     function sendStop() { sendCommand(0, 0, 0); }
 
+    function updateSensors(data) {
+      ['left','mid','right'].forEach(id => {
+        const cm = data[id];
+        let color = '#4caf50';
+        if (cm <= settings.ultra_threshold) color = '#e53935';
+        else if (cm <= settings.ultra_reduce) color = '#fbc02d';
+        const height = Math.min(cm * 2, 100);
+        const bar = document.querySelector(`#${id}Bar .bar`);
+        bar.style.height = height + 'px';
+        bar.style.backgroundColor = color;
+        document.getElementById(`${id}Label`).innerText = `${id === 'left' ? 'Venstre' : id === 'mid' ? 'Senter' : 'Høyre'}: ${cm} cm`;
+      });
+    }
+
     fetchBattery();
+    setInterval(fetchSensors, 300);
   </script>
 </body>
 </html>
