@@ -24,7 +24,7 @@ def save_settings(data):
 sensor_settings = load_settings()
 
 # --- Oppsett LIDAR
-lidar = RPLidar('/dev/ttyUSB1')  # Tilpass port hvis nødvendig
+lidar = RPLidar('/dev/ttyUSB0')  # Tilpass port hvis nødvendig
 lidar_data = []
 beveger_seg = False
 
