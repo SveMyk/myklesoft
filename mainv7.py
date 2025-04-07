@@ -5,6 +5,7 @@ import os
 import threading
 import json
 import RPi.GPIO as GPIO
+from rplidar import RPLidar
 
 # --- Konfigurasjonsfil for sensorinnstillinger
 settings_file = "sensor_settings.json"
@@ -21,6 +22,23 @@ def save_settings(data):
         json.dump(data, f)
 
 sensor_settings = load_settings()
+
+# --- Oppsett LIDAR
+
+lidar = RPLidar('/dev/ttyUSB1')  # Tilpass port hvis nødvendig
+lidar_data = []
+
+def oppdater_lidar():
+    global lidar_data
+    try:
+        for i, scan in enumerate(lidar.iter_scans()):
+            if len(scan) > 0:
+                lidar_data = [(round(angle, 1), round(distance, 1)) for (_, angle, distance) in scan][-10:]
+            time.sleep(0.1)
+    except Exception as e:
+        print(f"⚠️ LIDAR-feil: {e}")
+        lidar.stop()
+        lidar.stop_motor()
 
 # --- Sensoroppsett for HC-SR04
 SENSORS = {
@@ -152,6 +170,10 @@ def linjenavigasjon():
 
 app = Flask(__name__)
 
+@app.route("/lidar_data")
+def lidar_data_api():
+    return jsonify({"measurements": lidar_data})
+
 @app.route("/")
 def index(): return render_template("index.html")
 
@@ -229,4 +251,5 @@ def settings_data():
 if __name__ == "__main__":
     threading.Thread(target=update_sensor_data, daemon=True).start()
     threading.Thread(target=read_serial_from_arduino, daemon=True).start()
+    threading.Thread(target=oppdater_lidar, daemon=True).start()
     app.run(host="0.0.0.0", port=80)
