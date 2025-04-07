@@ -10,6 +10,8 @@ def lidar_loop():
     global scan_data
     lidar = RPLidar(PORT)
     try:
+        lidar.clean_input()              # 🔄 Tøm bufferen først
+        time.sleep(0.5)                  # ⏳ Gi den tid til å våkne
         for scan in lidar.iter_scans(scan_type='normal'):
             with lock:
                 scan_data = [
