@@ -1,0 +1,38 @@
+from rplidar import RPLidar, RPLidarException
+
+PORT = '/dev/ttyUSB0'  # Bytt hvis du har annen port
+BAUD = 115200
+
+try:
+    print("🔌 Kobler til LIDAR...")
+    lidar = RPLidar(PORT, baudrate=BAUD)
+
+    # Test 1: Få info
+    info = lidar.get_info()
+    print("\n📦 Enhetsinfo:")
+    for k, v in info.items():
+        print(f"  {k}: {v}")
+
+    # Test 2: Helsekontroll
+    health = lidar.get_health()
+    print("\n❤️ Helsekontroll:")
+    print(f"  Status: {health[0]}")
+    print(f"  Feilkode: {health[1]}")
+
+    if health[0] != 'Good':
+        print("⚠️ LIDAR rapporterer ikke 'Good'. Kan være et strøm- eller kommunikasjonsproblem.")
+    else:
+        print("✅ LIDAR ser ut til å være i god stand!")
+
+except RPLidarException as e:
+    print(f"\n❌ RPLidar-feil: {e}")
+
+except Exception as e:
+    print(f"\n❌ Uventet feil: {e}")
+
+finally:
+    try:
+        lidar.disconnect()
+        print("\n🔌 Frakoblet LIDAR.")
+    except:
+        pass
