@@ -32,9 +32,15 @@ def oppdater_lidar():
     global lidar_data
     try:
         for scan in lidar.iter_scans(max_buf_meas=6000):
-            if scan:
-                nyeste = [(round(angle, 1), round(distance, 1)) for (_, angle, distance) in scan if distance > 0]
-                lidar_data = nyeste[-3:] if beveger_seg else nyeste[-10:]
+            valid_scan = []
+            for measurement in scan:
+                try:
+                    _, angle, distance = measurement
+                    if distance > 0:
+                        valid_scan.append((round(angle, 1), round(distance, 1)))
+                except Exception as e:
+                    print(f"[LIDAR PARSE WARNING] {e}")
+            lidar_data = valid_scan[-3:] if beveger_seg else valid_scan[-10:]
             time.sleep(0.1)
     except Exception as e:
         print(f"⚠️ LIDAR-feil: {e}")
