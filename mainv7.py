@@ -24,16 +24,17 @@ def save_settings(data):
 sensor_settings = load_settings()
 
 # --- Oppsett LIDAR
-
 lidar = RPLidar('/dev/ttyUSB1')  # Tilpass port hvis nødvendig
 lidar_data = []
+beveger_seg = False
 
 def oppdater_lidar():
     global lidar_data
     try:
-        for i, scan in enumerate(lidar.iter_scans()):
-            if len(scan) > 0:
-                lidar_data = [(round(angle, 1), round(distance, 1)) for (_, angle, distance) in scan][-10:]
+        for scan in lidar.iter_scans(max_buf_meas=6000):
+            if scan:
+                nyeste = [(round(angle, 1), round(distance, 1)) for (_, angle, distance) in scan if distance > 0]
+                lidar_data = nyeste[-3:] if beveger_seg else nyeste[-10:]
             time.sleep(0.1)
     except Exception as e:
         print(f"⚠️ LIDAR-feil: {e}")
@@ -71,6 +72,8 @@ linje_status = "Søker etter linje"
 navigasjon_aktiv = False
 
 def send_to_arduino(command):
+    global beveger_seg
+    beveger_seg = command != "MOV:X=0,Y=0,R=0"
     if ser and ser.is_open:
         ser.write((command + "\n").encode())
         print(f"[SENDT] {command}")
