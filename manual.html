@@ -193,5 +193,14 @@
     fetchSensors();
     setInterval(fetchSensors, 300);
   </script>
+
+  <!-- LIDAR-plotområde -->
+<div id="lidar-container" style="width: 100%; height: 50vh; margin-top: 30px;">
+  <canvas id="lidar-canvas" width="800" height="400"></canvas>
+</div>
+
+<!-- Inkluder ny JavaScript-fil for LIDAR -->
+<script src="{{ url_for('static', filename='js/lidar.js') }}"></script>
+  
 </body>
 </html>
