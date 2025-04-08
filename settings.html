@@ -5,9 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sensorinnstillinger – GASSO</title>
   <style>
-    body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; text-align: center; }
+    body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; text-align: center; margin: 0; }
     h1 { color: #003366; }
     h2 { color: #003366; margin-top: 40px; }
+
+    header {
+      background-color: #00cfe8;
+      padding: 20px;
+      margin: -20px -20px 20px -20px;
+    }
+    header img {
+      height: 160px;
+    }
+    .battery {
+      margin-top: 10px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      transition: color 0.4s;
+    }
+    .battery.green { color: #28a745; }
+    .battery.orange { color: #ffc107; }
+    .battery.red { color: #dc3545; }
+
     .form-section {
       background: #fff;
       padding: 20px;
@@ -17,146 +36,215 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
     label { display: block; margin-top: 15px; font-weight: bold; }
-    input[type="number"] { padding: 10px; width: 80%; font-size: 1rem; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; }
-    .btn { margin-top: 20px; padding: 12px 20px; font-size: 1rem; background-color: #003366; color: white; border: none; border-radius: 8px; cursor: pointer; }
+    input[type="number"] {
+      padding: 10px;
+      width: 80%;
+      font-size: 1rem;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .btn {
+      margin-top: 20px;
+      padding: 12px 20px;
+      font-size: 1rem;
+      background-color: #003366;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
     .btn:hover { background-color: #005f99; }
-    .sensor-block { display: inline-block; margin: 10px 30px; text-align: center; }
-    .bar { width: 20px; height: 100px; background: #ccc; border-radius: 4px; margin: auto; display: flex; align-items: flex-end; justify-content: center; }
-    .bar-fill { width: 100%; border-radius: 4px; }
-    .ir-visual { width: 100px; height: 100px; border-radius: 6px; margin: 10px auto; border: 1px solid #999; background-color: #eee; }
+
+    .sensor-block {
+      display: inline-block;
+      margin: 10px 30px;
+      text-align: center;
+    }
+    .bar {
+      width: 20px;
+      height: 100px;
+      background: #ccc;
+      border-radius: 4px;
+      margin: auto;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .bar-fill {
+      width: 100%;
+      border-radius: 4px;
+    }
+    .ir-visual {
+      width: 100px;
+      height: 100px;
+      border-radius: 6px;
+      margin: 10px auto;
+      border: 1px solid #999;
+      background-color: #eee;
+    }
   </style>
 </head>
 <body>
-  <h1>Sensorinnstillinger</h1>
 
-  <form id="settingsForm">
-    <h2>Ultralydsensorer – Visning og terskler</h2>
-    <div class="form-section">
-      <div class="sensor-block">
-        <div class="bar"><div id="ultraLeftBar" class="bar-fill" style="height:10px;"></div></div>
-        <div id="ultraLeftLabel">Venstre: -- cm</div>
-      </div>
-      <div class="sensor-block">
-        <div class="bar"><div id="ultraMidBar" class="bar-fill" style="height:10px;"></div></div>
-        <div id="ultraMidLabel">Senter: -- cm</div>
-      </div>
-      <div class="sensor-block">
-        <div class="bar"><div id="ultraRightBar" class="bar-fill" style="height:10px;"></div></div>
-        <div id="ultraRightLabel">Høyre: -- cm</div>
-      </div>
+<header>
+  <img src="/static/gasso_logo.png" alt="GASSO Logo">
+  <div id="batteryStatus" class="battery">Batteristatus: <span id="batteryLevel">Laster...</span></div>
+</header>
 
-      <label for="ultra_threshold">Stoppgrense (cm):</label>
-      <input type="number" id="ultra_threshold" name="ultra_threshold" min="5" max="100">
+<h1>Sensorinnstillinger</h1>
 
-      <label for="ultra_reduce">Reduksjonsgrense (cm – lav hastighet):</label>
-      <input type="number" id="ultra_reduce" name="ultra_reduce" min="5" max="100">
+<form id="settingsForm">
+  <h2>Ultralydsensorer – Visning og terskler</h2>
+  <div class="form-section">
+    <div class="sensor-block">
+      <div class="bar"><div id="ultraLeftBar" class="bar-fill" style="height:10px;"></div></div>
+      <div id="ultraLeftLabel">Venstre: -- cm</div>
+    </div>
+    <div class="sensor-block">
+      <div class="bar"><div id="ultraMidBar" class="bar-fill" style="height:10px;"></div></div>
+      <div id="ultraMidLabel">Senter: -- cm</div>
+    </div>
+    <div class="sensor-block">
+      <div class="bar"><div id="ultraRightBar" class="bar-fill" style="height:10px;"></div></div>
+      <div id="ultraRightLabel">Høyre: -- cm</div>
     </div>
 
-    <h2>IR-sensorer – Visualisering og terskler</h2>
-    <div class="form-section">
-      <div class="sensor-block">
-        <div class="sensor-title">D1</div>
-        <div id="irValD1">--</div>
-        <div class="ir-visual" id="irBoxD1"></div>
-      </div>
-      <div class="sensor-block">
-        <div class="sensor-title">D3</div>
-        <div id="irValD3">--</div>
-        <div class="ir-visual" id="irBoxD3"></div>
-      </div>
-      <div class="sensor-block">
-        <div class="sensor-title">D4</div>
-        <div id="irValD4">--</div>
-        <div class="ir-visual" id="irBoxD4"></div>
-      </div>
-      <div class="sensor-block">
-        <div class="sensor-title">D6</div>
-        <div id="irValD6">--</div>
-        <div class="ir-visual" id="irBoxD6"></div>
-      </div>
+    <label for="ultra_threshold">Stoppgrense (cm):</label>
+    <input type="number" id="ultra_threshold" name="ultra_threshold" min="5" max="100">
 
-      <label for="ir_min">IR Terskel – Minimumsverdi:</label>
-      <input type="number" id="ir_min" name="ir_min" min="0" max="1023">
+    <label for="ultra_reduce">Reduksjonsgrense (cm – lav hastighet):</label>
+    <input type="number" id="ultra_reduce" name="ultra_reduce" min="5" max="100">
+  </div>
 
-      <label for="ir_max">IR Terskel – Maksimumsverdi:</label>
-      <input type="number" id="ir_max" name="ir_max" min="0" max="1023">
-
-      <button type="submit" class="btn">Lagre innstillinger</button>
+  <h2>IR-sensorer – Visualisering og terskler</h2>
+  <div class="form-section">
+    <div class="sensor-block">
+      <div class="sensor-title">D1</div>
+      <div id="irValD1">--</div>
+      <div class="ir-visual" id="irBoxD1"></div>
     </div>
-  </form>
+    <div class="sensor-block">
+      <div class="sensor-title">D3</div>
+      <div id="irValD3">--</div>
+      <div class="ir-visual" id="irBoxD3"></div>
+    </div>
+    <div class="sensor-block">
+      <div class="sensor-title">D4</div>
+      <div id="irValD4">--</div>
+      <div class="ir-visual" id="irBoxD4"></div>
+    </div>
+    <div class="sensor-block">
+      <div class="sensor-title">D6</div>
+      <div id="irValD6">--</div>
+      <div class="ir-visual" id="irBoxD6"></div>
+    </div>
 
-  <button class="btn" onclick="location.href='/'">Tilbake til hovedmeny</button>
+    <label for="ir_min">IR Terskel – Minimumsverdi:</label>
+    <input type="number" id="ir_min" name="ir_min" min="0" max="1023">
 
-  <script>
-    async function loadSettingsValues() {
-      try {
-        const res = await fetch("/settings_data");
-        const data = await res.json();
-        document.getElementById("ultra_threshold").value = data.ultra_threshold;
-        document.getElementById("ultra_reduce").value = data.ultra_reduce;
-        document.getElementById("ir_min").value = data.ir_min;
-        document.getElementById("ir_max").value = data.ir_max;
-      } catch (e) { console.log("Feil ved lasting av settings", e); }
-    }
+    <label for="ir_max">IR Terskel – Maksimumsverdi:</label>
+    <input type="number" id="ir_max" name="ir_max" min="0" max="1023">
 
-    async function updateSensors() {
-      try {
-        const res = await fetch("/sensors");
-        const data = await res.json();
-        updateUltrasoundBars(data);
-      } catch {}
-    }
+    <button type="submit" class="btn">Lagre innstillinger</button>
+  </div>
+</form>
 
-    function updateUltrasoundBars(data) {
-      const reduce = parseInt(document.getElementById("ultra_reduce").value || 40);
-      const stop = parseInt(document.getElementById("ultra_threshold").value || 20);
-      ["left","mid","right"].forEach(id => {
-        const val = data[id];
-        const label = document.getElementById(`ultra${capitalize(id)}Label`);
-        const bar = document.getElementById(`ultra${capitalize(id)}Bar`);
-        label.innerText = `${capitalize(id)}: ${val} cm`;
-        let color = "#4caf50";
-        if (val <= stop) color = "#e53935";
-        else if (val <= reduce) color = "#fbc02d";
-        bar.style.height = Math.min(val * 2, 100) + "px";
-        bar.style.backgroundColor = color;
-      });
-    }
+<button class="btn" onclick="location.href='/'">Tilbake til hovedmeny</button>
 
-    async function updateIRReadings() {
-      try {
-        const res = await fetch("/ir_data");
-        const data = await res.json();
-        ["D1", "D3", "D4", "D6"].forEach(sensor => {
-          document.getElementById(`irVal${sensor}`).innerText = data[sensor];
-          const gray = 255 - Math.floor((data[sensor] / 1023) * 255);
-          document.getElementById(`irBox${sensor}`).style.backgroundColor = `rgb(${gray}, ${gray}, ${gray})`;
-        });
-      } catch {}
-    }
+<script>
+  async function loadSettingsValues() {
+    try {
+      const res = await fetch("/settings_data");
+      const data = await res.json();
+      document.getElementById("ultra_threshold").value = data.ultra_threshold;
+      document.getElementById("ultra_reduce").value = data.ultra_reduce;
+      document.getElementById("ir_min").value = data.ir_min;
+      document.getElementById("ir_max").value = data.ir_max;
+    } catch (e) { console.log("Feil ved lasting av settings", e); }
+  }
 
-    function capitalize(str) { return str.charAt(0).toUpperCase() + str.slice(1); }
+  async function updateSensors() {
+    try {
+      const res = await fetch("/sensors");
+      const data = await res.json();
+      updateUltrasoundBars(data);
+    } catch {}
+  }
 
-    document.getElementById("settingsForm").addEventListener("submit", function(e) {
-      e.preventDefault();
-      const payload = {
-        ultra_threshold: parseInt(document.getElementById("ultra_threshold").value),
-        ultra_reduce: parseInt(document.getElementById("ultra_reduce").value),
-        ir_min: parseInt(document.getElementById("ir_min").value),
-        ir_max: parseInt(document.getElementById("ir_max").value)
-      };
-      fetch("/save_settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      })
-      .then(r => r.text())
-      .then(msg => alert(msg));
+  function updateUltrasoundBars(data) {
+    const reduce = parseInt(document.getElementById("ultra_reduce").value || 40);
+    const stop = parseInt(document.getElementById("ultra_threshold").value || 20);
+    ["left","mid","right"].forEach(id => {
+      const val = data[id];
+      const label = document.getElementById(`ultra${capitalize(id)}Label`);
+      const bar = document.getElementById(`ultra${capitalize(id)}Bar`);
+      label.innerText = `${capitalize(id)}: ${val} cm`;
+      let color = "#4caf50";
+      if (val <= stop) color = "#e53935";
+      else if (val <= reduce) color = "#fbc02d";
+      bar.style.height = Math.min(val * 2, 100) + "px";
+      bar.style.backgroundColor = color;
     });
+  }
 
-    loadSettingsValues();
-    setInterval(updateSensors, 1000);
-    setInterval(updateIRReadings, 1000);
-  </script>
+  async function updateIRReadings() {
+    try {
+      const res = await fetch("/ir_data");
+      const data = await res.json();
+      ["D1", "D3", "D4", "D6"].forEach(sensor => {
+        document.getElementById(`irVal${sensor}`).innerText = data[sensor];
+        const gray = 255 - Math.floor((data[sensor] / 1023) * 255);
+        document.getElementById(`irBox${sensor}`).style.backgroundColor = `rgb(${gray}, ${gray}, ${gray})`;
+      });
+    } catch {}
+  }
+
+  async function fetchBattery() {
+    try {
+      const response = await fetch('/battery');
+      const data = await response.json();
+      const level = data.level;
+      const voltage = data.voltage.toFixed(2);
+      const batteryText = `${level}% – ${voltage} V`;
+      const batteryDiv = document.getElementById('batteryStatus');
+      document.getElementById('batteryLevel').innerText = batteryText;
+
+      batteryDiv.classList.remove('green', 'orange', 'red');
+      if (level >= 75) batteryDiv.classList.add('green');
+      else if (level >= 40) batteryDiv.classList.add('orange');
+      else batteryDiv.classList.add('red');
+    } catch {
+      document.getElementById('batteryLevel').innerText = 'Ukjent';
+    }
+  }
+
+  function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  document.getElementById("settingsForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const payload = {
+      ultra_threshold: parseInt(document.getElementById("ultra_threshold").value),
+      ultra_reduce: parseInt(document.getElementById("ultra_reduce").value),
+      ir_min: parseInt(document.getElementById("ir_min").value),
+      ir_max: parseInt(document.getElementById("ir_max").value)
+    };
+    fetch("/save_settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    })
+    .then(r => r.text())
+    .then(msg => alert(msg));
+  });
+
+  loadSettingsValues();
+  fetchBattery();
+  setInterval(fetchBattery, 10000);
+  setInterval(updateSensors, 1000);
+  setInterval(updateIRReadings, 1000);
+</script>
 </body>
 </html>
