@@ -70,19 +70,9 @@ void loop() {
       if (posR != -1) rotasjon = kommando.substring(posR + 2).toFloat();
 
       float omega = 0;
-      int varighet = 0;
-
-      if (rotasjon != 0) {
-        omega = (rotasjon > 0) ? 1.0 : -1.0;
-        varighet = abs(rotasjon) / omega_max_deg_per_s * 1000;
-      }
+      if (rotasjon != 0) omega = (rotasjon > 0) ? 1.0 : -1.0;
 
       settHastighet(vx, vy, omega);
-
-      if (rotasjon != 0 && vx == 0 && vy == 0) {
-        delay(varighet);
-        stoppMotorer();
-      }
     }
   }
 
@@ -115,10 +105,9 @@ void loop() {
 void settHastighet(float vx, float vy, float omega) {
   // Korrekte motorvinkler: M1=60°, M2=300°, M3=180°
   // Snu X og Y retningene
-
   vx = -vx;
   vy = -vy;
-  
+
   const float theta1 = 1.0472;  // 60°
   const float theta2 = 5.2360;  // 300°
   const float theta3 = 3.1416;  // 180°
