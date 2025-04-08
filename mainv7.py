@@ -205,31 +205,6 @@ def control():
     cmd = request.args.get("cmd")
     if not cmd:
         return "Ingen kommando mottatt"
-
-    if not sensor_data or not sensor_settings:
-        return send_to_arduino(cmd)
-
-    threshold = sensor_settings["ultra_threshold"]
-    reduce = sensor_settings["ultra_reduce"]
-
-    match = re.search(r"X=([-+]?[0-9]*\.?[0-9]+)", cmd)
-    if match:
-        vx = float(match.group(1))
-        if vx > 0:
-            dist_left = sensor_data["left"]
-            dist_mid = sensor_data["mid"]
-            dist_right = sensor_data["right"]
-            nærmeste = min(dist_left, dist_mid, dist_right)
-
-            if nærmeste < threshold:
-                send_to_arduino("MOV:X=0,Y=0,R=0")
-                return "Nødbrems: Hindring for nærme i front"
-
-            elif nærmeste < reduce:
-                scale = round(nærmeste / reduce, 2)
-                # Bytt ut X=... med X=scale
-                cmd = re.sub(r"X=([-+]?[0-9]*\.?[0-9]+)", f"X={scale}", cmd)
-
     return send_to_arduino(cmd)
 
 @app.route("/sensors")
