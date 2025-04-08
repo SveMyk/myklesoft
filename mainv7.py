@@ -48,7 +48,8 @@ except Exception as e:
 
 sensor_data = {"left": 0.0, "mid": 0.0, "right": 0.0}
 ir_sensor_data = {"D1": 0, "D3": 0, "D4": 0, "D6": 0}
-battery_level = 78
+battery_level = 78         # i prosent
+battery_voltage = 15.0     # i volt
 linje_status = "Søker etter linje"
 navigasjon_aktiv = False
 
@@ -85,6 +86,7 @@ def update_sensor_data():
         time.sleep(0.25)
 
 def read_serial_from_arduino():
+    global battery_level, battery_voltage
     while True:
         if ser and ser.in_waiting > 0:
             try:
@@ -96,9 +98,14 @@ def read_serial_from_arduino():
                         ir_sensor_data["D3"] = int(parts[1])
                         ir_sensor_data["D4"] = int(parts[2])
                         ir_sensor_data["D6"] = int(parts[3])
+                elif line.startswith("BAT:"):
+                    spenning_lest = float(line[4:].strip())
+                    delingsfaktor = 3.13
+                    battery_voltage = round(spenning_lest * delingsfaktor, 2)
+                    battery_level = beregn_batteriprosent(spenning_lest)
             except Exception as e:
                 print(f"[SERIAL ERROR] {e}")
-
+                
 def linjenavigasjon():
     global linje_status, navigasjon_aktiv
     linje_status = "Søker etter linje"
@@ -189,7 +196,11 @@ def sensors():
     return jsonify(rounded_data)
 
 @app.route("/battery")
-def battery(): return jsonify({"level": battery_level})
+def battery():
+    return jsonify({
+        "level": battery_level,
+        "voltage": battery_voltage
+    })
 
 @app.route("/distance")
 def distance(): return jsonify({"distance": int(round(sensor_data["mid"]))})
