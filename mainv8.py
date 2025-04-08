@@ -134,10 +134,10 @@ def linjenavigasjon():
     linje_status = "Søker etter linje"
     navigasjon_aktiv = True
 
-    # Hent dynamiske innstillinger
-    fart = sensor_settings.get("linje_fart", 0.6)
-    rot_svak = sensor_settings.get("rotasjon_svak", 5)
-    rot_sterk = sensor_settings.get("rotasjon_sterk", 15)
+    # Hent innstillinger
+    fart = sensor_settings.get("linje_fart", 0.4)
+    r_svak = sensor_settings.get("rotasjon_svak", 5)
+    r_sterk = sensor_settings.get("rotasjon_sterk", 15)
     bruk_y = sensor_settings.get("bruk_y_retning", False)
 
     start_tid = time.time()
@@ -152,50 +152,56 @@ def linjenavigasjon():
         MIN = sensor_settings["ir_min"]
         MAX = sensor_settings["ir_max"]
 
-        d3_detect = MIN <= d3 <= MAX
-        d4_detect = MIN <= d4 <= MAX
-        d1_detect = MIN <= d1 <= MAX
-        d6_detect = MIN <= d6 <= MAX
+        # Definer bools
+        d1_høy = MIN <= d1 <= MAX
+        d3_høy = MIN <= d3 <= MAX
+        d4_høy = MIN <= d4 <= MAX
+        d6_høy = MIN <= d6 <= MAX
 
+        # Tid brukt så langt
         tid_brukt = time.time() - start_tid
 
-        if not linje_funnet:
-            send_to_arduino(f"MOV:X={fart},Y=0,R=0")
-            if d3_detect or d4_detect:
-                linje_funnet = True
-                linje_status = "Linje detektert"
-        else:
-            if d3_detect and d4_detect:
-                linje_status = "Følger linje"
-                send_to_arduino(f"MOV:X={fart},Y=0,R=0")
-            elif d3_detect and not d4_detect:
-                linje_status = "Korrigerer venstre"
-                if bruk_y:
-                    send_to_arduino(f"MOV:X=0,Y={fart},R=0")
-                else:
-                    send_to_arduino(f"MOV:X={fart},Y=0,R={-rot_svak}")
-            elif d4_detect and not d3_detect:
-                linje_status = "Korrigerer høyre"
-                if bruk_y:
-                    send_to_arduino(f"MOV:X=0,Y={-fart},R=0")
-                else:
-                    send_to_arduino(f"MOV:X={fart},Y=0,R={rot_svak}")
-            elif d1_detect:
-                linje_status = "Korrigerer hardt venstre"
-                send_to_arduino(f"MOV:X={fart},Y=0,R={-rot_sterk}")
-            elif d6_detect:
-                linje_status = "Korrigerer hardt høyre"
-                send_to_arduino(f"MOV:X={fart},Y=0,R={rot_sterk}")
-            else:
-                linje_status = "Søker etter linje..."
+        # --- Navigasjonslogikk ---
+        kommando = None
 
+        if d3_høy or d4_høy:
+            kommando = f"MOV:X={fart},Y=0,R=0"
+            linje_status = "Følger linje"
+            linje_funnet = True
+
+        elif d1_høy and d3_høy:
+            kommando = f"MOV:X={fart},Y=0,R={r_svak}"
+            linje_status = "Lett høyre"
+
+        elif d4_høy and d6_høy:
+            kommando = f"MOV:X={fart},Y=0,R={-r_svak}"
+            linje_status = "Lett venstre"
+
+        elif d1_høy and not (d3_høy or d4_høy):
+            kommando = f"MOV:X={fart},Y=0,R={r_sterk}"
+            linje_status = "Kraftig høyre"
+
+        elif d6_høy and not (d3_høy or d4_høy):
+            kommando = f"MOV:X={fart},Y=0,R={-r_sterk}"
+            linje_status = "Kraftig venstre"
+
+        else:
+            kommando = None
+            linje_status = "Søker etter linje..."
+
+        # Send kommando hvis definert
+        if kommando:
+            send_to_arduino(kommando)
+
+        # Avbryt etter 10 sek hvis aldri funnet linje
         if not linje_funnet and tid_brukt > 10:
             send_to_arduino("MOV:X=0,Y=0,R=0")
             linje_status = "Ingen linje detektert"
             navigasjon_aktiv = False
             break
 
-        if linje_funnet and not (d1_detect or d3_detect or d4_detect or d6_detect):
+        # Hvis mistet linje etter å ha funnet den
+        if linje_funnet and not (d1_høy or d3_høy or d4_høy or d6_høy):
             timeout_start = time.time()
             while time.time() - timeout_start < 5:
                 if any(MIN <= ir_sensor_data[k] <= MAX for k in ["D1", "D3", "D4", "D6"]):
