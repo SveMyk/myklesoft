@@ -22,8 +22,13 @@
         .battery {
             margin-top: 10px;
             font-size: 1.2rem;
-            color: #003366;
+            font-weight: bold;
+            transition: color 0.4s;
         }
+        .battery.green { color: #28a745; }
+        .battery.orange { color: #ffc107; }
+        .battery.red { color: #dc3545; }
+
         .container {
             margin: 30px auto;
             width: 90%;
@@ -49,7 +54,7 @@
 <body>
     <header>
         <img src="/static/gasso_logo.png" alt="GASSO Logo">
-        <div class="battery">Batteristatus: <span id="batteryLevel">Loading...</span></div>
+        <div id="batteryStatus" class="battery">Batteristatus: <span id="batteryLevel">Laster...</span></div>
     </header>
 
     <div class="container">
@@ -65,7 +70,18 @@
             try {
                 const response = await fetch('/battery');
                 const data = await response.json();
-                document.getElementById('batteryLevel').innerText = data.level + '%';
+                const level = data.level;
+                const voltage = data.voltage.toFixed(2);
+                const batteryText = `${level}% – ${voltage} V`;
+                const batteryDiv = document.getElementById('batteryStatus');
+
+                document.getElementById('batteryLevel').innerText = batteryText;
+
+                batteryDiv.classList.remove('green', 'orange', 'red');
+                if (level >= 75) batteryDiv.classList.add('green');
+                else if (level >= 40) batteryDiv.classList.add('orange');
+                else batteryDiv.classList.add('red');
+
             } catch (error) {
                 document.getElementById('batteryLevel').innerText = 'Ukjent';
             }
@@ -81,6 +97,7 @@
         }
 
         fetchBattery();
+        setInterval(fetchBattery, 10000); // Oppdater hvert 10. sekund
     </script>
 </body>
 </html>
