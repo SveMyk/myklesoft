@@ -121,7 +121,14 @@ def read_serial_from_arduino():
                     battery_level = beregn_batteriprosent(spenning_lest)
             except Exception as e:
                 print(f"[SERIAL ERROR] {e}")
-                
+
+def beregn_batteriprosent(spenning):
+    # For 4S Li-ion: 12.0V (tom) – 16.8V (full)
+    maks = 16.8
+    min = 12.0
+    prosent = (spenning - min) / (maks - min) * 100
+    return int(max(0, min(100, prosent)))
+
 def linjenavigasjon():
     global linje_status, navigasjon_aktiv
     linje_status = "Søker etter linje"
