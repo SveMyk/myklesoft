@@ -190,45 +190,30 @@ def control():
     if not cmd:
         return "Ingen kommando mottatt"
 
-    # Ekstra sikkerhet – gjør ikke noe hvis sensordata mangler
     if not sensor_data or not sensor_settings:
         return send_to_arduino(cmd)
 
     threshold = sensor_settings["ultra_threshold"]
     reduce = sensor_settings["ultra_reduce"]
 
-    # --- Fremover-bevegelse (X=1)
+    # --- Bevegelse forover (X=1): vurder alle sensorer i front
     if "MOV:X=1" in cmd:
-        dist = sensor_data["mid"]
-        if dist < threshold:
-            return "Stoppet: Hindring for nærme (midten)"
-        elif dist < reduce:
+        dist_left = sensor_data["left"]
+        dist_mid = sensor_data["mid"]
+        dist_right = sensor_data["right"]
+
+        nærmeste = min(dist_left, dist_mid, dist_right)
+
+        if nærmeste < threshold:
+            send_to_arduino("MOV:X=0,Y=0,R=0")
+            return "Nødbrems: Hindring for nærme i front"
+
+        elif nærmeste < reduce:
             cmd = cmd.replace("X=1", "X=0.5")
+            return send_to_arduino(cmd) + " (Hastighet redusert)"
 
-    # --- Bakover-bevegelse (X=-1)
-    if "MOV:X=-1" in cmd:
-        # Eksempel: sjekk sensorer bakover her hvis aktuelt
-        pass
-
-    # --- Venstre (Y=1)
-    if "MOV:Y=1" in cmd:
-        dist = sensor_data["left"]
-        if dist < threshold:
-            return "Stoppet: Hindring venstre"
-        elif dist < reduce:
-            cmd = cmd.replace("Y=1", "Y=0.5")
-
-    # --- Høyre (Y=-1)
-    if "MOV:Y=-1" in cmd:
-        dist = sensor_data["right"]
-        if dist < threshold:
-            return "Stoppet: Hindring høyre"
-        elif dist < reduce:
-            cmd = cmd.replace("Y=-1", "Y=-0.5")
-
-    # --- Hvis alt er ok, send kommando
+    # --- All annen bevegelse (bakover, sideveis, rotasjon): tillatt
     return send_to_arduino(cmd)
-
 
 @app.route("/sensors")
 def sensors():
