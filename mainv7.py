@@ -118,7 +118,7 @@ def read_serial_from_arduino():
                     spenning_lest = float(line[4:].strip())
                     delingsfaktor = 3.13
                     battery_voltage = round(spenning_lest * delingsfaktor, 2)
-                    battery_level = beregn_batteriprosent(spenning_lest)
+                    battery_level = beregn_batteriprosent(battery_voltage)
             except Exception as e:
                 print(f"[SERIAL ERROR] {e}")
 
