@@ -196,23 +196,30 @@ def control():
     threshold = sensor_settings["ultra_threshold"]
     reduce = sensor_settings["ultra_reduce"]
 
-    # --- Bevegelse forover (X=1): vurder alle sensorer i front
-    if "MOV:X=1" in cmd:
-        dist_left = sensor_data["left"]
-        dist_mid = sensor_data["mid"]
-        dist_right = sensor_data["right"]
+    # --- Sjekk X-retning
+    if "MOV:" in cmd:
+        try:
+            x_start = cmd.index("X=") + 2
+            x_end = cmd.index(",", x_start)
+            vx = float(cmd[x_start:x_end])
+        except:
+            vx = 0
 
-        nærmeste = min(dist_left, dist_mid, dist_right)
+        if vx > 0:
+            dist_left = sensor_data["left"]
+            dist_mid = sensor_data["mid"]
+            dist_right = sensor_data["right"]
+            nærmeste = min(dist_left, dist_mid, dist_right)
 
-        if nærmeste < threshold:
-            send_to_arduino("MOV:X=0,Y=0,R=0")
-            return "Nødbrems: Hindring for nærme i front"
+            if nærmeste < threshold:
+                send_to_arduino("MOV:X=0,Y=0,R=0")
+                return "Nødbrems: Hindring for nærme i front"
 
-        elif nærmeste < reduce:
-            cmd = cmd.replace("X=1", "X=0.5")
-            return send_to_arduino(cmd) + " (Hastighet redusert)"
+            elif nærmeste < reduce:
+                # Skaler X dynamisk
+                scale = round(nærmeste / reduce, 2)
+                cmd = cmd.replace(f"X={vx}", f"X={scale}")
 
-    # --- All annen bevegelse (bakover, sideveis, rotasjon): tillatt
     return send_to_arduino(cmd)
 
 @app.route("/sensors")
