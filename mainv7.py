@@ -154,40 +154,41 @@ def linjenavigasjon():
         tid_brukt = time.time() - start_tid
 
         if not linje_funnet:
-            send_to_arduino("MOV:X=1,Y=0,R=0")  # kjør rett frem
+            send_to_arduino("MOV:X=0.3,Y=0,R=0")  # rolig frem
             if d3_detect or d4_detect:
                 linje_funnet = True
                 linje_status = "Linje detektert"
         else:
             if d3_detect and d4_detect:
-                send_to_arduino("MOV:X=1,Y=0,R=0")
+                send_to_arduino("MOV:X=0.3,Y=0,R=0")
                 linje_status = "Følger linje"
             elif d3_detect and not d4_detect:
-                send_to_arduino("MOV:X=1,Y=0,R=-5")
+                send_to_arduino("MOV:X=0.3,Y=0,R=-1")  # korriger høyre
                 linje_status = "Korrigerer høyre"
             elif d4_detect and not d3_detect:
-                send_to_arduino("MOV:X=1,Y=0,R=5")
+                send_to_arduino("MOV:X=0.3,Y=0,R=1")  # korriger venstre
                 linje_status = "Korrigerer venstre"
             elif d1_detect:
-                send_to_arduino("MOV:X=1,Y=0,R=15")
+                send_to_arduino("MOV:X=0.3,Y=0,R=2")  # hard venstre
                 linje_status = "Korrigerer hardt venstre"
             elif d6_detect:
-                send_to_arduino("MOV:X=1,Y=0,R=-15")
+                send_to_arduino("MOV:X=0.3,Y=0,R=-2")  # hard høyre
                 linje_status = "Korrigerer hardt høyre"
             else:
                 linje_status = "Søker etter linje..."
 
+        # Hvis ingen linje funnet etter 10 sekunder
         if not linje_funnet and tid_brukt > 10:
             send_to_arduino("MOV:X=0,Y=0,R=0")
             linje_status = "Ingen linje detektert"
             navigasjon_aktiv = False
             break
 
-        if linje_funnet and not (d3_detect or d4_detect or d1_detect or d6_detect):
-            # Mista linje etter tidligere funn – stopp etter 5 sek
-            wait_start = time.time()
-            while time.time() - wait_start < 5:
-                if any(MIN <= ir_sensor_data[k] <= MAX for k in ["D1", "D3", "D4", "D6"]):
+        # Hvis linje tidligere ble funnet, men mistes i 5 sek
+        if linje_funnet and not (d1_detect or d3_detect or d4_detect or d6_detect):
+            timeout_start = time.time()
+            while time.time() - timeout_start < 5:
+                if any(MIN <= ir_sensor_data[s] <= MAX for s in ["D1", "D3", "D4", "D6"]):
                     break
                 time.sleep(0.1)
             else:
@@ -197,7 +198,6 @@ def linjenavigasjon():
                 break
 
         time.sleep(0.2)
-
 app = Flask(__name__)
 
 @app.route("/")
