@@ -47,6 +47,7 @@ except Exception as e:
     print(f"Feil ved seriell tilkobling: {e}")
     ser = None
 
+siste_aktiv_kommando = ""
 sensor_data = {"left": 0.0, "mid": 0.0, "right": 0.0}
 ir_sensor_data = {"D1": 0, "D3": 0, "D4": 0, "D6": 0}
 battery_level = 78         # i prosent
@@ -55,11 +56,25 @@ linje_status = "Søker etter linje"
 navigasjon_aktiv = False
 
 def send_to_arduino(command):
+    global siste_aktiv_kommando
     if ser and ser.is_open:
         ser.write((command + "\n").encode())
         print(f"[SENDT] {command}")
+        siste_aktiv_kommando = command  # lagre sist kjørte
         return f"Kommando sendt: {command}"
     return "Seriell port ikke tilgjengelig"
+
+def overvåk_for_hindring():
+    while True:
+        try:
+            if "MOV:X=1" in siste_aktiv_kommando:
+                dist = min(sensor_data["left"], sensor_data["mid"], sensor_data["right"])
+                if dist < sensor_settings["ultra_threshold"]:
+                    print("[BREMS] Hindring for nær! Stopper robot.")
+                    send_to_arduino("MOV:X=0,Y=0,R=0")
+        except Exception as e:
+            print(f"[BREMS-FEIL] {e}")
+        time.sleep(0.1)  # 100 ms
 
 def get_distance(trig, echo):
     GPIO.output(trig, True)
@@ -267,4 +282,5 @@ def settings_data():
 if __name__ == "__main__":
     threading.Thread(target=update_sensor_data, daemon=True).start()
     threading.Thread(target=read_serial_from_arduino, daemon=True).start()
+    threading.Thread(target=overvåk_for_hindring, daemon=True).start() 
     app.run(host="0.0.0.0", port=80)
