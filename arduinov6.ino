@@ -23,13 +23,13 @@ const int motor1_PWM = 5;
 const int motor2_PWM = 6;
 const int motor3_PWM = 3;
 
-// --- IR-sensorer (D1, D3, D4, D6) på A0-A3 ---
+// --- IR-sensorer ---
 const int sensorD1 = A0;
 const int sensorD3 = A1;
 const int sensorD4 = A2;
 const int sensorD6 = A3;
 
-// --- Batterispenning på A4 ---
+// --- Batteri ---
 const int batteriPin = A4;
 
 // --- Variabler ---
@@ -37,12 +37,12 @@ const int pwmMax = 255;
 const float pwmHastighet = 0.4 * pwmMax;
 String kommando = "";
 
-// --- Tid for oppdateringer ---
+// --- Tid ---
 unsigned long forrigeIRtid = 0;
-const unsigned long irOppdateringsIntervall = 500; // ms
+const unsigned long irOppdateringsIntervall = 500;
 
 unsigned long forrigeBatteriTid = 0;
-const unsigned long batteriIntervall = 30000; // ms
+const unsigned long batteriIntervall = 30000;
 
 void setup() {
   pinMode(motor1_IN1, OUTPUT); pinMode(motor1_IN2, OUTPUT);
@@ -53,7 +53,7 @@ void setup() {
 }
 
 void loop() {
-  // --- Mottak av kommandoer fra RPi ---
+  // --- Mottak av kommandoer ---
   if (Serial.available()) {
     kommando = Serial.readStringUntil('\n');
     kommando.trim();
@@ -86,7 +86,7 @@ void loop() {
     }
   }
 
-  // --- Skriv IR-verdier til Serial hvert 500 ms ---
+  // --- IR-verdier til Serial ---
   if (millis() - forrigeIRtid >= irOppdateringsIntervall) {
     int valD1 = analogRead(sensorD1);
     int valD3 = analogRead(sensorD3);
@@ -102,28 +102,31 @@ void loop() {
     forrigeIRtid = millis();
   }
 
-  // --- Send batterispenning til RPi hvert 30 sekund ---
+  // --- Batteri til Serial ---
   if (millis() - forrigeBatteriTid >= batteriIntervall) {
     int analogVerdi = analogRead(batteriPin);
     float spenning = analogVerdi * (5.0 / 1023.0);
     Serial.print("BAT:");
-    Serial.println(spenning, 2); // to desimaler
+    Serial.println(spenning, 2);
     forrigeBatteriTid = millis();
   }
 }
 
 void settHastighet(float vx, float vy, float omega) {
-  const float theta1 = 0;
-  const float theta2 = 2.0944; // 120 grader i radianer
-  const float theta3 = 4.1888; // 240 grader i radianer
+  // Korrekte motorvinkler: M1=60°, M2=300°, M3=180°
+  const float theta1 = 1.0472;  // 60°
+  const float theta2 = 5.2360;  // 300°
+  const float theta3 = 3.1416;  // 180°
   const float r = 1.0;
 
-  float v1 = vx * sin(theta1) - vy * cos(theta1) - omega * r;
-  float v2 = vx * sin(theta2) - vy * cos(theta2) - omega * r;
-  float v3 = vx * sin(theta3) - vy * cos(theta3) - omega * r;
+  float v1 = -vx * sin(theta1) + vy * cos(theta1) + omega * r;
+  float v2 = -vx * sin(theta2) + vy * cos(theta2) + omega * r;
+  float v3 = -vx * sin(theta3) + vy * cos(theta3) + omega * r;
 
   float maxV = max(max(abs(v1), abs(v2)), abs(v3));
-  if (maxV > 1) { v1 /= maxV; v2 /= maxV; v3 /= maxV; }
+  if (maxV > 1) {
+    v1 /= maxV; v2 /= maxV; v3 /= maxV;
+  }
 
   settMotorHastighet(motor1_IN1, motor1_IN2, motor1_PWM, v1 * pwmHastighet);
   settMotorHastighet(motor2_IN1, motor2_IN2, motor2_PWM, v2 * pwmHastighet);
