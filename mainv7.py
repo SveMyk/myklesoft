@@ -132,14 +132,15 @@ def beregn_batteriprosent(spenning):
 def linjenavigasjon():
     global linje_status, navigasjon_aktiv
     linje_status = "Søker etter linje"
-    siste_tid_linje = None
-    start_tid = time.time()
     navigasjon_aktiv = True
 
+    start_tid = time.time()
+    linje_funnet = False
+
     while navigasjon_aktiv:
+        d1 = ir_sensor_data["D1"]
         d3 = ir_sensor_data["D3"]
         d4 = ir_sensor_data["D4"]
-        d1 = ir_sensor_data["D1"]
         d6 = ir_sensor_data["D6"]
 
         MIN = sensor_settings["ir_min"]
@@ -150,35 +151,52 @@ def linjenavigasjon():
         d1_detect = MIN <= d1 <= MAX
         d6_detect = MIN <= d6 <= MAX
 
-        if d3_detect or d4_detect:
-            siste_tid_linje = time.time()
-            linje_status = "Linje detektert"
-            if d3_detect and d4_detect:
-                send_to_arduino("MOV:X=0,Y=1,R=0")
-            elif d3_detect and not d4_detect:
-                send_to_arduino("MOV:X=0,Y=1,R=5")
-            elif d4_detect and not d3_detect:
-                send_to_arduino("MOV:X=0,Y=1,R=-5")
+        tid_brukt = time.time() - start_tid
+
+        if not linje_funnet:
+            send_to_arduino("MOV:X=1,Y=0,R=0")  # kjør rett frem
+            if d3_detect or d4_detect:
+                linje_funnet = True
+                linje_status = "Linje detektert"
         else:
-            linje_status = "Søker etter linje"
-            if d1_detect:
-                send_to_arduino("MOV:X=0,Y=1,R=-15")
+            if d3_detect and d4_detect:
+                send_to_arduino("MOV:X=1,Y=0,R=0")
+                linje_status = "Følger linje"
+            elif d3_detect and not d4_detect:
+                send_to_arduino("MOV:X=1,Y=0,R=5")
+                linje_status = "Korrigerer høyre"
+            elif d4_detect and not d3_detect:
+                send_to_arduino("MOV:X=1,Y=0,R=-5")
+                linje_status = "Korrigerer venstre"
+            elif d1_detect:
+                send_to_arduino("MOV:X=1,Y=0,R=-15")
+                linje_status = "Korrigerer hardt venstre"
             elif d6_detect:
-                send_to_arduino("MOV:X=0,Y=1,R=15")
+                send_to_arduino("MOV:X=1,Y=0,R=15")
+                linje_status = "Korrigerer hardt høyre"
+            else:
+                linje_status = "Søker etter linje..."
 
-        if not siste_tid_linje and time.time() - start_tid > 10:
+        if not linje_funnet and tid_brukt > 10:
             send_to_arduino("MOV:X=0,Y=0,R=0")
             linje_status = "Ingen linje detektert"
             navigasjon_aktiv = False
             break
 
-        if siste_tid_linje and time.time() - siste_tid_linje > 5:
-            send_to_arduino("MOV:X=0,Y=0,R=0")
-            linje_status = "Ingen linje detektert"
-            navigasjon_aktiv = False
-            break
+        if linje_funnet and not (d3_detect or d4_detect or d1_detect or d6_detect):
+            # Mista linje etter tidligere funn – stopp etter 5 sek
+            wait_start = time.time()
+            while time.time() - wait_start < 5:
+                if any(MIN <= ir_sensor_data[k] <= MAX for k in ["D1", "D3", "D4", "D6"]):
+                    break
+                time.sleep(0.1)
+            else:
+                send_to_arduino("MOV:X=0,Y=0,R=0")
+                linje_status = "Linje tapt"
+                navigasjon_aktiv = False
+                break
 
-        time.sleep(0.25)
+        time.sleep(0.2)
 
 app = Flask(__name__)
 
