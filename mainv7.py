@@ -4,6 +4,7 @@ import time
 import os
 import threading
 import json
+import re
 import RPi.GPIO as GPIO
 
 # --- Konfigurasjonsfil for sensorinnstillinger
@@ -196,15 +197,9 @@ def control():
     threshold = sensor_settings["ultra_threshold"]
     reduce = sensor_settings["ultra_reduce"]
 
-    # --- Sjekk X-retning
-    if "MOV:" in cmd:
-        try:
-            x_start = cmd.index("X=") + 2
-            x_end = cmd.index(",", x_start)
-            vx = float(cmd[x_start:x_end])
-        except:
-            vx = 0
-
+    match = re.search(r"X=([-+]?[0-9]*\.?[0-9]+)", cmd)
+    if match:
+        vx = float(match.group(1))
         if vx > 0:
             dist_left = sensor_data["left"]
             dist_mid = sensor_data["mid"]
@@ -216,9 +211,9 @@ def control():
                 return "Nødbrems: Hindring for nærme i front"
 
             elif nærmeste < reduce:
-                # Skaler X dynamisk
                 scale = round(nærmeste / reduce, 2)
-                cmd = cmd.replace(f"X={vx}", f"X={scale}")
+                # Bytt ut X=... med X=scale
+                cmd = re.sub(r"X=([-+]?[0-9]*\.?[0-9]+)", f"X={scale}", cmd)
 
     return send_to_arduino(cmd)
 
