@@ -163,16 +163,16 @@ def linjenavigasjon():
                 send_to_arduino("MOV:X=1,Y=0,R=0")
                 linje_status = "Følger linje"
             elif d3_detect and not d4_detect:
-                send_to_arduino("MOV:X=1,Y=0,R=5")
+                send_to_arduino("MOV:X=1,Y=0,R=-5")
                 linje_status = "Korrigerer høyre"
             elif d4_detect and not d3_detect:
-                send_to_arduino("MOV:X=1,Y=0,R=-5")
+                send_to_arduino("MOV:X=1,Y=0,R=5")
                 linje_status = "Korrigerer venstre"
             elif d1_detect:
-                send_to_arduino("MOV:X=1,Y=0,R=-15")
+                send_to_arduino("MOV:X=1,Y=0,R=15")
                 linje_status = "Korrigerer hardt venstre"
             elif d6_detect:
-                send_to_arduino("MOV:X=1,Y=0,R=15")
+                send_to_arduino("MOV:X=1,Y=0,R=-15")
                 linje_status = "Korrigerer hardt høyre"
             else:
                 linje_status = "Søker etter linje..."
