@@ -14,15 +14,18 @@ settings_file = "sensor_settings.json"
 autonom_aktiv = False
 autonom_status = "Venter på start"
 
-lidar_port = "/dev/ttyUSB0"  # Endre hvis nødvendig
+lidar_data_history = []  # 72 sektorer x 5 runder
+MAX_HISTORIKK = 5
 lidar = None
+lidar_port = "/dev/ttyUSB0"  # Endre hvis nødvendig
+
 
 def start_lidar():
     global lidar, lidar_data_history
     try:
         lidar = RPLidar(lidar_port)
         print("[LIDAR] Starter oppdateringsloop...")
-        for scan in lidar.iter_scans(max_buf_meas=500):
+        for scan in lidar.iter_scans(max_buf_meas=200):
             sektorer = [None] * 72
             for (_, angle, dist) in scan:
                 if 0 < dist < 4000:  # maks 4 meter
@@ -425,6 +428,10 @@ def lidar_data():
     if lidar is None:
         threading.Thread(target=start_lidar, daemon=True).start()
     return jsonify({"scan": lidar_data_history})
+
+@app.route("/lidar")
+def lidar_view():
+    return render_template("lidar.html")
 
 if __name__ == "__main__":
     threading.Thread(target=update_sensor_data, daemon=True).start()
