@@ -1,0 +1,66 @@
+<h1>Autonom Kjøring</h1>
+
+<div id="statusBox" style="margin: 20px auto; padding: 15px; font-size: 1.2rem;
+     background-color: #003366; color: white; border-radius: 10px; max-width: 400px;">
+  Status: <span id="statusText">Ikke aktiv</span>
+</div>
+
+<form id="autonomForm" style="max-width: 500px; margin: 30px auto;">
+  <label for="auto_stop">Stoppgrense (cm):</label>
+  <input type="number" id="auto_stop" name="auto_stop" min="1" max="100"><br><br>
+
+  <label for="auto_rotate">Roter ved hindring på begge sider (cm):</label>
+  <input type="number" id="auto_rotate" name="auto_rotate" min="5" max="100"><br><br>
+
+  <label for="auto_avoid">Unnamanøver ved hindring én side (cm):</label>
+  <input type="number" id="auto_avoid" name="auto_avoid" min="5" max="100"><br><br>
+
+  <button type="submit">Lagre innstillinger</button>
+</form>
+
+<div style="text-align:center;">
+  <button class="btn" onclick="startAutonom()">Start Autonom</button>
+  <button class="btn" onclick="stopAutonom()">Stopp Autonom</button>
+  <button class="btn" onclick="location.href='/'">Tilbake til hovedmeny</button>
+</div>
+
+<script>
+function startAutonom() {
+  fetch("/start_autonom");
+}
+function stopAutonom() {
+  fetch("/stop_autonom");
+}
+function updateStatus() {
+  fetch("/autonom_status")
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("statusText").innerText = data.status;
+    });
+}
+function loadSettings() {
+  fetch("/settings_data")
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("auto_stop").value = data.auto_stop;
+      document.getElementById("auto_rotate").value = data.auto_rotate;
+      document.getElementById("auto_avoid").value = data.auto_avoid;
+    });
+}
+document.getElementById("autonomForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const settings = {
+    auto_stop: parseInt(document.getElementById("auto_stop").value),
+    auto_rotate: parseInt(document.getElementById("auto_rotate").value),
+    auto_avoid: parseInt(document.getElementById("auto_avoid").value)
+  };
+  fetch("/save_settings", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(settings)
+  }).then(r => r.text()).then(alert);
+});
+
+setInterval(updateStatus, 1000);
+loadSettings();
+</script>
