@@ -6,12 +6,35 @@ import threading
 import json
 import re
 import RPi.GPIO as GPIO
+from rplidar import RPLidar
 
 # --- Konfigurasjonsfil for sensorinnstillinger
 settings_file = "sensor_settings.json"
 
 autonom_aktiv = False
 autonom_status = "Venter på start"
+
+lidar_port = "/dev/ttyUSB0"  # Endre hvis nødvendig
+lidar = None
+
+def start_lidar():
+    global lidar, lidar_data_history
+    try:
+        lidar = RPLidar(lidar_port)
+        print("[LIDAR] Starter oppdateringsloop...")
+        for scan in lidar.iter_scans(max_buf_meas=500):
+            sektorer = [None] * 72
+            for (_, angle, dist) in scan:
+                if 0 < dist < 4000:  # maks 4 meter
+                    indeks = int(angle // 5) % 72
+                    if sektorer[indeks] is None or dist < sektorer[indeks]:
+                        sektorer[indeks] = int(dist)
+            # Roter historikk
+            lidar_data_history.insert(0, sektorer)
+            if len(lidar_data_history) > MAX_HISTORIKK:
+                lidar_data_history.pop()
+    except Exception as e:
+        print(f"[LIDAR-FEIL] {e}")
 
 def load_settings():
     try:
@@ -395,6 +418,13 @@ def stop_autonom():
 @app.route("/autonom_status")
 def get_autonom_status():
     return jsonify({"status": autonom_status})
+
+@app.route("/lidar_data")
+def lidar_data():
+    global lidar
+    if lidar is None:
+        threading.Thread(target=start_lidar, daemon=True).start()
+    return jsonify({"scan": lidar_data_history})
 
 if __name__ == "__main__":
     threading.Thread(target=update_sensor_data, daemon=True).start()
