@@ -10,6 +10,9 @@ import RPi.GPIO as GPIO
 # --- Konfigurasjonsfil for sensorinnstillinger
 settings_file = "sensor_settings.json"
 
+autonom_aktiv = False
+autonom_status = "Venter på start"
+
 def load_settings():
     try:
         with open(settings_file, "r") as f:
@@ -251,6 +254,39 @@ def linjenavigasjon():
                             
         time.sleep(0.2)
 
+def autonom_navigasjon():
+    global autonom_aktiv, autonom_status
+    autonom_aktiv = True
+    autonom_status = "Autonom kjøring aktivert"
+
+    stop_grense = sensor_settings.get("auto_stop", 5)
+    rotasjon_grense = sensor_settings.get("auto_rotate", 20)
+    unnam_grense = sensor_settings.get("auto_avoid", 40)
+
+    while autonom_aktiv:
+        left = sensor_data["left"]
+        mid = sensor_data["mid"]
+        right = sensor_data["right"]
+
+        if left < stop_grense or mid < stop_grense or right < stop_grense:
+            send_to_arduino("MOV:X=0,Y=0,R=0")
+            autonom_status = "STOPP – hindring < {} cm".format(stop_grense)
+        elif left < rotasjon_grense and right < rotasjon_grense:
+            send_to_arduino("MOV:X=0,Y=0,R=180")
+            autonom_status = "Roterer – hindringer begge sider"
+            time.sleep(3)
+        elif left < unnam_grense and right > left + 10:
+            send_to_arduino("MOV:X=0,Y=1,R=-15")
+            autonom_status = "Svinger høyre – venstre blokkert"
+        elif right < unnam_grense and left > right + 10:
+            send_to_arduino("MOV:X=0,Y=1,R=15")
+            autonom_status = "Svinger venstre – høyre blokkert"
+        else:
+            send_to_arduino("MOV:X=0,Y=1,R=0")
+            autonom_status = "Kjører rett frem"
+
+        time.sleep(0.2)
+
         
 app = Flask(__name__)
 
@@ -332,6 +368,24 @@ def reboot():
 @app.route("/settings_data")
 def settings_data():
     return jsonify(sensor_settings)
+
+@app.route("/start_autonom")
+def start_autonom():
+    thread = threading.Thread(target=autonom_navigasjon, daemon=True)
+    thread.start()
+    return "Autonom navigasjon startet."
+
+@app.route("/stop_autonom")
+def stop_autonom():
+    global autonom_aktiv, autonom_status
+    autonom_aktiv = False
+    autonom_status = "Autonom kjøring stoppet"
+    send_to_arduino("MOV:X=0,Y=0,R=0")
+    return "Autonom navigasjon stoppet."
+
+@app.route("/autonom_status")
+def get_autonom_status():
+    return jsonify({"status": autonom_status})
 
 if __name__ == "__main__":
     threading.Thread(target=update_sensor_data, daemon=True).start()
