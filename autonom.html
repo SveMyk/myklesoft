@@ -1,53 +1,167 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GASSO - Autonom Kjøring</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-            text-align: center;
-        }
-        header {
-            background-color: #00cfe8;
-            padding: 20px;
-        }
-        header img {
-            height: 180px;
-        }
-        .content {
-            margin-top: 40px;
-            font-size: 1.3rem;
-            color: #333;
-        }
-        .btn-back {
-            margin: 40px auto;
-            padding: 12px 25px;
-            font-size: 1.1rem;
-            background-color: #003366;
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-        }
-        .btn-back:hover {
-            background-color: #005f99;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GASSO - Autonom Kjøring</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+      text-align: center;
+    }
+    header {
+      background-color: #00cfe8;
+      padding: 20px;
+    }
+    header img {
+      height: 180px;
+    }
+    h1 {
+      margin-top: 30px;
+      color: #003366;
+    }
+    .content {
+      font-size: 1.2rem;
+      color: #333;
+      margin: 20px auto;
+      max-width: 700px;
+    }
+    .btn {
+      margin: 20px 10px;
+      padding: 12px 25px;
+      font-size: 1.1rem;
+      background-color: #003366;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #005f99;
+    }
+    #statusBox {
+      margin: 30px auto;
+      padding: 15px;
+      font-size: 1.2rem;
+      background-color: #003366;
+      color: white;
+      border-radius: 10px;
+      max-width: 400px;
+    }
+    form {
+      background: #fff;
+      max-width: 500px;
+      margin: 30px auto;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+      color: #003366;
+    }
+    input[type="number"] {
+      padding: 10px;
+      width: 80%;
+      font-size: 1rem;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button[type="submit"] {
+      margin-top: 20px;
+      background-color: #003366;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button[type="submit"]:hover {
+      background-color: #005f99;
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <img src="/static/gasso_logo.png" alt="GASSO Logo">
-    </header>
+  <header>
+    <img src="/static/gasso_logo.png" alt="GASSO Logo">
+  </header>
 
-    <div class="content">
-        <p>Autonom kjøring er under arbeid. Denne funksjonen blir tilgjengelig snart.</p>
-    </div>
+  <h1>Autonom Kjøring</h1>
 
-    <button class="btn-back" onclick="location.href='/'">Tilbake til hovedmeny</button>
+  <div id="statusBox">
+    Status: <span id="statusText">Ikke aktiv</span>
+  </div>
+
+  <form id="autonomForm">
+    <label for="auto_stop">Stoppgrense (cm):</label>
+    <input type="number" id="auto_stop" name="auto_stop" min="1" max="100">
+
+    <label for="auto_rotate">Roter ved hindring på begge sider (cm):</label>
+    <input type="number" id="auto_rotate" name="auto_rotate" min="5" max="100">
+
+    <label for="auto_avoid">Unnamanøver ved hindring én side (cm):</label>
+    <input type="number" id="auto_avoid" name="auto_avoid" min="5" max="100">
+
+    <button type="submit">Lagre innstillinger</button>
+  </form>
+
+  <div>
+    <button class="btn" onclick="startAutonom()">Start Autonom</button>
+    <button class="btn" onclick="stopAutonom()">Stopp Autonom</button>
+    <button class="btn" onclick="location.href='/'">Tilbake til hovedmeny</button>
+  </div>
+
+  <script>
+    function startAutonom() {
+      fetch("/start_autonom");
+    }
+
+    function stopAutonom() {
+      fetch("/stop_autonom");
+    }
+
+    function updateStatus() {
+      fetch("/autonom_status")
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("statusText").innerText = data.status;
+        });
+    }
+
+    function loadSettings() {
+      fetch("/settings_data")
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("auto_stop").value = data.auto_stop;
+          document.getElementById("auto_rotate").value = data.auto_rotate;
+          document.getElementById("auto_avoid").value = data.auto_avoid;
+        });
+    }
+
+    document.getElementById("autonomForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const settings = {
+        auto_stop: parseInt(document.getElementById("auto_stop").value),
+        auto_rotate: parseInt(document.getElementById("auto_rotate").value),
+        auto_avoid: parseInt(document.getElementById("auto_avoid").value)
+      };
+      fetch("/save_settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings)
+      })
+      .then(r => r.text())
+      .then(msg => alert(msg));
+    });
+
+    setInterval(updateStatus, 1000);
+    loadSettings();
+  </script>
 </body>
 </html>
