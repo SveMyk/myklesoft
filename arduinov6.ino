@@ -39,7 +39,7 @@ String kommando = "";
 
 // --- Tid ---
 unsigned long forrigeIRtid = 0;
-const unsigned long irOppdateringsIntervall = 500;
+const unsigned long irOppdateringsIntervall = 100;
 
 unsigned long forrigeBatteriTid = 0;
 const unsigned long batteriIntervall = 30000;
