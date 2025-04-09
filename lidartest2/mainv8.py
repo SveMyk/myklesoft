@@ -19,7 +19,6 @@ MAX_HISTORIKK = 5
 lidar = None
 lidar_port = "/dev/ttyUSB0"  # Endre hvis nødvendig
 
-
 def start_lidar():
     global lidar, lidar_data_history
     try:
@@ -28,7 +27,6 @@ def start_lidar():
         for scan in lidar.iter_scans(max_buf_meas=200):
             sektorer = [None] * 72
             for measurement in scan:
-                # unpack trygt
                 try:
                     angle = measurement[1]
                     dist = measurement[2]
@@ -44,6 +42,8 @@ def start_lidar():
             print(f"[LIDAR] Lagret runde med {sum(1 for s in sektorer if s)} sektorer.")
     except Exception as e:
         print(f"[LIDAR-FEIL] {e}")
+
+
 def load_settings():
     try:
         with open(settings_file, "r") as f:
