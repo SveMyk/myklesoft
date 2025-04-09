@@ -202,7 +202,7 @@ def linjenavigasjon():
             send_to_arduino(kommando)
 
         # Hvis alle sensorer er lave – start søk
-       if not (d1_høy or d3_høy or d4_høy or d6_høy):
+    if not (d1_høy or d3_høy or d4_høy or d6_høy):
             send_to_arduino("MOV:X=0,Y=0,R=0")
             linje_status = "Mistet linje – søker med rotasjon"
         
@@ -249,7 +249,7 @@ def linjenavigasjon():
                         navigasjon_aktiv = False
                         break
                         
-                time.sleep(0.2)
+        time.sleep(0.2)
 
         
 app = Flask(__name__)
