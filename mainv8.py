@@ -263,7 +263,6 @@ def autonom_navigasjon():
     autonom_aktiv = True
     autonom_status = "Autonom kjøring aktivert"
 
-    stop_grense = sensor_settings.get("auto_stop", 5)
     rotasjon_grense = sensor_settings.get("auto_rotate", 20)
     unnam_grense = sensor_settings.get("auto_avoid", 40)
 
@@ -272,22 +271,28 @@ def autonom_navigasjon():
         mid = sensor_data["mid"]
         right = sensor_data["right"]
 
-        if left < stop_grense or mid < stop_grense or right < stop_grense:
-            send_to_arduino("MOV:X=0,Y=0,R=0")
-            autonom_status = "STOPP – hindring < {} cm".format(stop_grense)
-        elif left < rotasjon_grense and right < rotasjon_grense:
+        # 1. Blokkert begge sider
+        if left < rotasjon_grense and right < rotasjon_grense:
             send_to_arduino("MOV:X=0,Y=0,R=180")
-            autonom_status = "Roterer – hindringer begge sider"
+            autonom_status = "Roterer 180° – begge sider blokkert"
             time.sleep(3)
+
+        # 2. Venstre blokkert – sving høyre (rotér litt med klokka)
         elif left < unnam_grense and right > left + 10:
-            send_to_arduino("MOV:X=0,Y=1,R=-15")
-            autonom_status = "Svinger høyre – venstre blokkert"
+            send_to_arduino("MOV:X=0,Y=0,R=15")
+            autonom_status = "Roterer høyre – venstre blokkert"
+            time.sleep(0.5)  # liten rotasjon
+
+        # 3. Høyre blokkert – sving venstre (rotér litt mot klokka)
         elif right < unnam_grense and left > right + 10:
-            send_to_arduino("MOV:X=0,Y=1,R=15")
-            autonom_status = "Svinger venstre – høyre blokkert"
+            send_to_arduino("MOV:X=0,Y=0,R=-15")
+            autonom_status = "Roterer venstre – høyre blokkert"
+            time.sleep(0.5)
+
+        # 4. Fri bane – kjør frem
         else:
-            send_to_arduino("MOV:X=0,Y=1,R=0")
-            autonom_status = "Kjører rett frem"
+            send_to_arduino("MOV:X=1,Y=0,R=0")
+            autonom_status = "Fremover – ingen hindring"
 
         time.sleep(0.2)
 
