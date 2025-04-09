@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>GASSO - Autonom Kjøring</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       background-color: #f4f4f4;
       text-align: center;
     }
@@ -22,12 +21,6 @@
     h1 {
       margin-top: 30px;
       color: #003366;
-    }
-    .content {
-      font-size: 1.2rem;
-      color: #333;
-      margin: 20px auto;
-      max-width: 700px;
     }
     .btn {
       margin: 20px 10px;
@@ -85,14 +78,42 @@
     button[type="submit"]:hover {
       background-color: #005f99;
     }
+
+    .sensor-data {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 40px;
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .sensor-bar {
+      width: 30px;
+      height: 120px;
+      margin: auto;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .bar {
+      width: 100%;
+      border-radius: 6px;
+    }
+    .sensor-block {
+      text-align: center;
+    }
   </style>
 </head>
 <body>
   <header>
-    <img src="/static/gasso_logo.png" alt="GASSO Logo">
+    <img src="/static/gasso_logo.png" alt="GASSO Logo" />
   </header>
 
-  <h1>Autonom Kjøring</h1>
+  <h1>Autonom Kjøring (Rotasjonsbasert)</h1>
 
   <div id="statusBox">
     Status: <span id="statusText">Ikke aktiv</span>
@@ -100,16 +121,37 @@
 
   <form id="autonomForm">
     <label for="auto_stop">Stoppgrense (cm):</label>
-    <input type="number" id="auto_stop" name="auto_stop" min="1" max="100">
+    <input type="number" id="auto_stop" name="auto_stop" min="1" max="100"/>
 
     <label for="auto_rotate">Roter ved hindring på begge sider (cm):</label>
-    <input type="number" id="auto_rotate" name="auto_rotate" min="5" max="100">
+    <input type="number" id="auto_rotate" name="auto_rotate" min="5" max="100"/>
 
     <label for="auto_avoid">Unnamanøver ved hindring én side (cm):</label>
-    <input type="number" id="auto_avoid" name="auto_avoid" min="5" max="100">
+    <input type="number" id="auto_avoid" name="auto_avoid" min="5" max="100"/>
 
     <button type="submit">Lagre innstillinger</button>
   </form>
+
+  <div class="sensor-data">
+    <div class="sensor-block">
+      <div id="leftBar" class="sensor-bar">
+        <div class="bar" style="height:10px; background:#ccc"></div>
+      </div>
+      <div id="leftLabel">Venstre: -- cm</div>
+    </div>
+    <div class="sensor-block">
+      <div id="midBar" class="sensor-bar">
+        <div class="bar" style="height:10px; background:#ccc"></div>
+      </div>
+      <div id="midLabel">Midt: -- cm</div>
+    </div>
+    <div class="sensor-block">
+      <div id="rightBar" class="sensor-bar">
+        <div class="bar" style="height:10px; background:#ccc"></div>
+      </div>
+      <div id="rightLabel">Høyre: -- cm</div>
+    </div>
+  </div>
 
   <div>
     <button class="btn" onclick="startAutonom()">Start Autonom</button>
@@ -118,6 +160,8 @@
   </div>
 
   <script>
+    const settings = { auto_stop: 5, auto_rotate: 20, auto_avoid: 40 };
+
     function startAutonom() {
       fetch("/start_autonom");
     }
@@ -134,6 +178,26 @@
         });
     }
 
+    function updateSensors() {
+      fetch("/sensors")
+        .then(res => res.json())
+        .then(data => {
+          ["left", "mid", "right"].forEach(id => {
+            const cm = data[id];
+            let color = "#4caf50";
+            if (cm <= settings.auto_stop) color = "#e53935";
+            else if (cm <= settings.auto_avoid) color = "#fbc02d";
+            const height = Math.min(cm * 2, 100);
+            const bar = document.querySelector(`#${id}Bar .bar`);
+            bar.style.height = height + "px";
+            bar.style.backgroundColor = color;
+            document.getElementById(`${id}Label`).innerText =
+              (id === "left" ? "Venstre" : id === "right" ? "Høyre" : "Midt") +
+              ": " + cm + " cm";
+          });
+        });
+    }
+
     function loadSettings() {
       fetch("/settings_data")
         .then(res => res.json())
@@ -141,12 +205,15 @@
           document.getElementById("auto_stop").value = data.auto_stop;
           document.getElementById("auto_rotate").value = data.auto_rotate;
           document.getElementById("auto_avoid").value = data.auto_avoid;
+          settings.auto_stop = data.auto_stop;
+          settings.auto_rotate = data.auto_rotate;
+          settings.auto_avoid = data.auto_avoid;
         });
     }
 
-    document.getElementById("autonomForm").addEventListener("submit", function(e) {
+    document.getElementById("autonomForm").addEventListener("submit", function (e) {
       e.preventDefault();
-      const settings = {
+      const newSettings = {
         auto_stop: parseInt(document.getElementById("auto_stop").value),
         auto_rotate: parseInt(document.getElementById("auto_rotate").value),
         auto_avoid: parseInt(document.getElementById("auto_avoid").value)
@@ -154,13 +221,14 @@
       fetch("/save_settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(settings)
+        body: JSON.stringify(newSettings)
       })
-      .then(r => r.text())
-      .then(msg => alert(msg));
+        .then(r => r.text())
+        .then(msg => alert(msg));
     });
 
     setInterval(updateStatus, 1000);
+    setInterval(updateSensors, 1000);
     loadSettings();
   </script>
 </body>
