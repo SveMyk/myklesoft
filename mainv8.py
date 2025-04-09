@@ -134,87 +134,110 @@ def linjenavigasjon():
     linje_status = "Søker etter linje"
     navigasjon_aktiv = True
 
-    # Hent innstillinger
     fart = sensor_settings.get("linje_fart", 0.4)
     r_svak = sensor_settings.get("rotasjon_svak", 1)
     r_sterk = sensor_settings.get("rotasjon_sterk", 2)
     bruk_y = sensor_settings.get("bruk_y_retning", False)
 
+    MIN = sensor_settings["ir_min"]
+    MAX = sensor_settings["ir_max"]
+
+    # --- Fase 1: Søk etter linje i maks 10 sekunder ---
     start_tid = time.time()
     linje_funnet = False
 
+    while navigasjon_aktiv and time.time() - start_tid < 10:
+        send_to_arduino(f"MOV:X={fart},Y=0,R=0")
+        linje_status = "Søker etter linje"
+
+        d3 = ir_sensor_data["D3"]
+        d4 = ir_sensor_data["D4"]
+
+        if MIN <= d3 <= MAX or MIN <= d4 <= MAX:
+            linje_funnet = True
+            break
+
+        time.sleep(0.2)
+
+    if not linje_funnet:
+        send_to_arduino("MOV:X=0,Y=0,R=0")
+        linje_status = "Ingen linje detektert"
+        navigasjon_aktiv = False
+        return
+
+    # --- Fase 2: Følg linje med korreksjon ---
     while navigasjon_aktiv:
         d1 = ir_sensor_data["D1"]
         d3 = ir_sensor_data["D3"]
         d4 = ir_sensor_data["D4"]
         d6 = ir_sensor_data["D6"]
 
-        MIN = sensor_settings["ir_min"]
-        MAX = sensor_settings["ir_max"]
-
-        # Definer bools
         d1_høy = MIN <= d1 <= MAX
         d3_høy = MIN <= d3 <= MAX
         d4_høy = MIN <= d4 <= MAX
         d6_høy = MIN <= d6 <= MAX
 
-        # Tid brukt så langt
-        tid_brukt = time.time() - start_tid
-
-        # --- Navigasjonslogikk ---
         kommando = None
 
         if d3_høy or d4_høy:
             kommando = f"MOV:X={fart},Y=0,R=0"
             linje_status = "Følger linje"
-            linje_funnet = True
-
         elif d1_høy and d3_høy:
             kommando = f"MOV:X={fart},Y=0,R={r_svak}"
             linje_status = "Lett høyre"
-
         elif d4_høy and d6_høy:
             kommando = f"MOV:X={fart},Y=0,R={-r_svak}"
             linje_status = "Lett venstre"
-
         elif d1_høy and not d3_høy:
             kommando = f"MOV:X={fart},Y=0,R={r_sterk}"
             linje_status = "Kraftig høyre"
-
         elif d6_høy and not d4_høy:
             kommando = f"MOV:X={fart},Y=0,R={-r_sterk}"
             linje_status = "Kraftig venstre"
-
         else:
             kommando = None
             linje_status = "Søker etter linje..."
 
-        # Send kommando hvis definert
         if kommando:
             send_to_arduino(kommando)
 
-        # Avbryt etter 10 sek hvis aldri funnet linje
-        if not linje_funnet and tid_brukt > 10:
+       # Hvis alle sensorer er lave – start søk
+if not (d1_høy or d3_høy or d4_høy or d6_høy):
+    send_to_arduino("MOV:X=0,Y=0,R=0")
+    linje_status = "Mistet linje – søker i Y-retning"
+    
+    # Søk mot venstre i 2 sek
+    søk_start = time.time()
+    while time.time() - søk_start < 2:
+        send_to_arduino(f"MOV:X=0,Y=0.4,R=0")
+        time.sleep(0.2)
+
+        d3 = ir_sensor_data["D3"]
+        d4 = ir_sensor_data["D4"]
+        if MIN <= d3 <= MAX or MIN <= d4 <= MAX:
+            linje_status = "Linje gjenfunnet (venstre)"
+            break
+
+    # Hvis ikke funnet – søk mot høyre i 4 sek
+    else:
+        søk_start = time.time()
+        while time.time() - søk_start < 4:
+            send_to_arduino(f"MOV:X=0,Y=-0.4,R=0")
+            time.sleep(0.2)
+
+            d3 = ir_sensor_data["D3"]
+            d4 = ir_sensor_data["D4"]
+            if MIN <= d3 <= MAX or MIN <= d4 <= MAX:
+                linje_status = "Linje gjenfunnet (høyre)"
+                break
+        else:
             send_to_arduino("MOV:X=0,Y=0,R=0")
-            linje_status = "Ingen linje detektert"
+            linje_status = "Linje tapt etter søk"
             navigasjon_aktiv = False
             break
 
-        # Hvis mistet linje etter å ha funnet den
-        if linje_funnet and not (d1_høy or d3_høy or d4_høy or d6_høy):
-            timeout_start = time.time()
-            while time.time() - timeout_start < 5:
-                if any(MIN <= ir_sensor_data[k] <= MAX for k in ["D1", "D3", "D4", "D6"]):
-                    break
-                time.sleep(0.1)
-            else:
-                send_to_arduino("MOV:X=0,Y=0,R=0")
-                linje_status = "Linje tapt"
-                navigasjon_aktiv = False
-                break
-
         time.sleep(0.2)
-
+        
 app = Flask(__name__)
 
 @app.route("/")
