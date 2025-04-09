@@ -26,19 +26,22 @@ def start_lidar():
         print("[LIDAR] Starter oppdateringsloop...")
         for scan in lidar.iter_scans(max_buf_meas=1000):
             sektorer = [None] * 72
-            for (_, angle, dist, _) in scan:
-                if 0 < dist < 4000:
-                    index = int(angle // 5) % 72
-                    if sektorer[index] is None or dist < sektorer[index]:
-                        sektorer[index] = int(dist)
+            for m in scan:
+                try:
+                    angle = m[1]
+                    dist = m[2]
+                    if 0 < dist < 4000:
+                        index = int(angle // 5) % 72
+                        if sektorer[index] is None or dist < sektorer[index]:
+                            sektorer[index] = int(dist)
+                except Exception as e:
+                    print(f"[LIDAR-UNPACK-FEIL] {e}")
             antall = sum(1 for s in sektorer if s)
-            if antall >= 30:  # bare lagre "nyttig" runde
+            if antall >= 30:
                 lidar_data_history.insert(0, sektorer)
                 if len(lidar_data_history) > MAX_HISTORIKK:
                     lidar_data_history.pop()
                 print(f"[LIDAR] Lagret runde med {antall} sektorer.")
-    except Exception as e:
-        print(f"[LIDAR-FEIL] {e}")
 
 def load_settings():
     try:
