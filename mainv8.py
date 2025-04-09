@@ -142,19 +142,6 @@ def linjenavigasjon():
     MIN = sensor_settings["ir_min"]
     MAX = sensor_settings["ir_max"]
 
-def linjenavigasjon():
-    global linje_status, navigasjon_aktiv
-    linje_status = "Søker etter linje"
-    navigasjon_aktiv = True
-
-    fart = sensor_settings.get("linje_fart", 0.4)
-    r_svak = sensor_settings.get("rotasjon_svak", 1)
-    r_sterk = sensor_settings.get("rotasjon_sterk", 2)
-    bruk_y = sensor_settings.get("bruk_y_retning", False)
-
-    MIN = sensor_settings["ir_min"]
-    MAX = sensor_settings["ir_max"]
-
     # --- Fase 1: Søk etter linje i maks 10 sekunder ---
     start_tid = time.time()
     linje_funnet = False
