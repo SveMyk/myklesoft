@@ -68,16 +68,20 @@ def send_to_arduino(command):
     return "Seriell port ikke tilgjengelig"
 
 def overvåk_for_hindring():
+    global autonom_aktiv, autonom_status
     while True:
         try:
             if "MOV:X=1" in siste_aktiv_kommando:
                 dist = min(sensor_data["left"], sensor_data["mid"], sensor_data["right"])
-                if dist < sensor_settings["ultra_threshold"]:
+                if dist < sensor_settings.get("ultra_threshold", 20):
                     print("[BREMS] Hindring for nær! Stopper robot.")
                     send_to_arduino("MOV:X=0,Y=0,R=0")
+                    if autonom_aktiv:
+                        autonom_aktiv = False
+                        autonom_status = "Stoppet av bremselogikk"
         except Exception as e:
             print(f"[BREMS-FEIL] {e}")
-        time.sleep(0.1)  # 100 ms
+        time.sleep(0.1)
 
 def get_distance(trig, echo):
     GPIO.output(trig, True)
