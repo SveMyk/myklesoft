@@ -42,6 +42,8 @@ def start_lidar():
                 if len(lidar_data_history) > MAX_HISTORIKK:
                     lidar_data_history.pop()
                 print(f"[LIDAR] Lagret runde med {antall} sektorer.")
+    except Exception as e:
+        print(f"[LIDAR-FEIL] {e}")
 
 def load_settings():
     try:
