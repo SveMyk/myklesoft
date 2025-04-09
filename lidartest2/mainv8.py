@@ -27,7 +27,7 @@ def start_lidar():
         print("[LIDAR] Starter oppdateringsloop...")
         for scan in lidar.iter_scans(max_buf_meas=200):
             sektorer = [None] * 72
-            for (_, angle, dist) in scan:
+            for (_, angle, dist, _) in scan:
                 if 0 < dist < 4000:  # maks 4 meter
                     indeks = int(angle // 5) % 72
                     if sektorer[indeks] is None or dist < sektorer[indeks]:
