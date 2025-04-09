@@ -11,6 +11,7 @@ const float max_RPM = 115.0;
 const float v_max_hjul_cm_per_s = (hjul_omkrets_cm * max_RPM) / 60.0;
 const float omega_max_rad_per_s = v_max_hjul_cm_per_s / r_robot_cm;
 const float omega_max_deg_per_s = omega_max_rad_per_s * (180.0 / 3.1416);
+const float rotasjonsReduksjon = 0.2;
 
 // --- Motorpinner ---
 const int motor1_IN1 = 9;
@@ -112,6 +113,9 @@ void settHastighet(float vx, float vy, float omega) {
   const float theta2 = 5.2360;  // 300°
   const float theta3 = 3.1416;  // 180°
   const float r = 1.0;
+
+  const float rotasjonsReduksjon = 0.2;  // Behold 20 % av RPi-rotasjon
+  omega *= rotasjonsReduksjon;
 
   float v1 = -vx * sin(theta1) + vy * cos(theta1) + omega * r;
   float v2 = -vx * sin(theta2) + vy * cos(theta2) + omega * r;
