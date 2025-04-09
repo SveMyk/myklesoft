@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sensorinnstillinger – GASSO</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; text-align: center; }
+    h1 { color: #003366; }
+    h2 { color: #003366; margin-top: 40px; }
+    .form-section {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 800px;
+      margin: 20px auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    label { display: block; margin-top: 15px; font-weight: bold; }
+    input[type="number"] {
+      padding: 10px;
+      width: 80%;
+      font-size: 1rem;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .btn {
+      margin-top: 20px;
+      padding: 12px 20px;
+      font-size: 1rem;
+      background-color: #003366;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .btn:hover { background-color: #005f99; }
+  </style>
+</head>
+<body>
+
+<h1>Sensorinnstillinger</h1>
+
+<form id="settingsForm">
+  <h2>Ultralydsensorer</h2>
+  <div class="form-section">
+    <label for="ultra_threshold">Stoppgrense (cm):</label>
+    <input type="number" id="ultra_threshold" name="ultra_threshold" min="5" max="100">
+    <label for="ultra_reduce">Reduksjonsgrense (cm):</label>
+    <input type="number" id="ultra_reduce" name="ultra_reduce" min="5" max="100">
+  </div>
+
+  <h2>IR-sensorer</h2>
+  <div class="form-section">
+    <label for="ir_min">Minimumsverdi:</label>
+    <input type="number" id="ir_min" name="ir_min" min="0" max="1023">
+    <label for="ir_max">Maksimumsverdi:</label>
+    <input type="number" id="ir_max" name="ir_max" min="0" max="1023">
+  </div>
+
+  <h2>Linjenavigasjon – Justeringer</h2>
+  <div class="form-section">
+    <label for="hastighet_linjenavigasjon">Hastighet (0–1.0):</label>
+    <input type="number" id="hastighet_linjenavigasjon" name="hastighet_linjenavigasjon" step="0.1" min="0" max="1">
+    
+    <label for="rotasjon_svak">Svak rotasjon (−5 til 5):</label>
+    <input type="number" id="rotasjon_svak" name="rotasjon_svak" step="0.1" min="-10" max="10">
+    
+    <label for="rotasjon_sterk">Sterk rotasjon (−15 til 15):</label>
+    <input type="number" id="rotasjon_sterk" name="rotasjon_sterk" step="0.1" min="-30" max="30">
+  </div>
+
+  <button type="submit" class="btn">Lagre innstillinger</button>
+</form>
+
+<button class="btn" onclick="location.href='/'">Tilbake til hovedmeny</button>
+
+<script>
+  async function loadSettingsValues() {
+    try {
+      const res = await fetch("/settings_data");
+      const data = await res.json();
+      document.getElementById("ultra_threshold").value = data.ultra_threshold;
+      document.getElementById("ultra_reduce").value = data.ultra_reduce;
+      document.getElementById("ir_min").value = data.ir_min;
+      document.getElementById("ir_max").value = data.ir_max;
+      document.getElementById("hastighet_linjenavigasjon").value = data.hastighet_linjenavigasjon || 0.3;
+      document.getElementById("rotasjon_svak").value = data.rotasjon_svak || -2;
+      document.getElementById("rotasjon_sterk").value = data.rotasjon_sterk || -5;
+    } catch (e) { console.log("Feil ved lasting av settings", e); }
+  }
+
+  document.getElementById("settingsForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const payload = {
+      ultra_threshold: parseInt(document.getElementById("ultra_threshold").value),
+      ultra_reduce: parseInt(document.getElementById("ultra_reduce").value),
+      ir_min: parseInt(document.getElementById("ir_min").value),
+      ir_max: parseInt(document.getElementById("ir_max").value),
+      hastighet_linjenavigasjon: parseFloat(document.getElementById("hastighet_linjenavigasjon").value),
+      rotasjon_svak: parseFloat(document.getElementById("rotasjon_svak").value),
+      rotasjon_sterk: parseFloat(document.getElementById("rotasjon_sterk").value)
+    };
+    fetch("/save_settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    })
+    .then(r => r.text())
+    .then(msg => alert(msg));
+  });
+
+  loadSettingsValues();
+</script>
+
+</body>
+</html>
