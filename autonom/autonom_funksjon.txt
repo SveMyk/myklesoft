@@ -1,0 +1,55 @@
+autonom_aktiv = False
+autonom_status = "Venter på start"
+
+def autonom_navigasjon():
+    global autonom_aktiv, navigasjon_aktiv, autonom_status
+    autonom_aktiv = True
+    navigasjon_aktiv = False
+    autonom_status = "Autonom kjøring aktivert"
+
+    # Bruk egne variabler for autonom navigasjon
+    stop_limit = sensor_settings.get("auto_stop", 5)
+    rotate_limit = sensor_settings.get("auto_rotate", 20)
+    avoid_limit = sensor_settings.get("auto_avoid", 40)
+
+    while autonom_aktiv:
+        left = sensor_data["left"]
+        mid = sensor_data["mid"]
+        right = sensor_data["right"]
+
+        if left < stop_limit or right < stop_limit or mid < stop_limit:
+            send_to_arduino("MOV:X=0,Y=0,R=0")
+            autonom_status = "STOPP – hindring for nær (<{}cm)".format(stop_limit)
+        elif left < rotate_limit and right < rotate_limit:
+            send_to_arduino("MOV:X=0,Y=0,R=180")
+            autonom_status = "Roterer 180° – hindring på begge sider"
+            time.sleep(3)
+        elif left < avoid_limit and right > left + 10:
+            send_to_arduino("MOV:X=0,Y=1,R=-15")
+            autonom_status = "Svinger høyre – venstre blokkert"
+        elif right < avoid_limit and left > right + 10:
+            send_to_arduino("MOV:X=0,Y=1,R=15")
+            autonom_status = "Svinger venstre – høyre blokkert"
+        else:
+            send_to_arduino("MOV:X=0,Y=1,R=0")
+            autonom_status = "Kjører rett frem – fri bane"
+
+        time.sleep(0.25)
+
+@app.route("/start_autonom")
+def start_autonom():
+    thread = threading.Thread(target=autonom_navigasjon, daemon=True)
+    thread.start()
+    return "Autonom navigasjon startet."
+
+@app.route("/stop_autonom")
+def stop_autonom():
+    global autonom_aktiv, autonom_status
+    autonom_aktiv = False
+    autonom_status = "Autonom kjøring stoppet"
+    send_to_arduino("MOV:X=0,Y=0,R=0")
+    return "Autonom navigasjon stoppet."
+
+@app.route("/autonom_status")
+def get_autonom_status():
+    return jsonify({"status": autonom_status})
