@@ -18,6 +18,11 @@
     header img {
       height: 180px;
     }
+    .battery {
+      margin-top: 10px;
+      font-size: 1.1rem;
+      color: #003366;
+    }
     h1 {
       margin-top: 30px;
       color: #003366;
@@ -111,6 +116,7 @@
 <body>
   <header>
     <img src="/static/gasso_logo.png" alt="GASSO Logo" />
+    <div class="battery">Batteristatus: <span id="batteryLevel">--%</span></div>
   </header>
 
   <h1>Autonom Kjøring (Rotasjonsbasert)</h1>
@@ -198,6 +204,14 @@
         });
     }
 
+    function fetchBattery() {
+      fetch("/battery")
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("batteryLevel").innerText = data.level + "%";
+        });
+    }
+
     function loadSettings() {
       fetch("/settings_data")
         .then(res => res.json())
@@ -227,9 +241,11 @@
         .then(msg => alert(msg));
     });
 
+    fetchBattery();
+    loadSettings();
     setInterval(updateStatus, 1000);
     setInterval(updateSensors, 1000);
-    loadSettings();
+    setInterval(fetchBattery, 30000);
   </script>
 </body>
 </html>
