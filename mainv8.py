@@ -202,53 +202,53 @@ def linjenavigasjon():
             send_to_arduino(kommando)
 
         # Hvis alle sensorer er lave – start søk
-    if not (d1_høy or d3_høy or d4_høy or d6_høy):
-            send_to_arduino("MOV:X=0,Y=0,R=0")
-            linje_status = "Mistet linje – søker med rotasjon"
-        
-            # Søk rotasjon mot venstre i 2 sek
-            søk_start = time.time()
-            while time.time() - søk_start < 2:
-                send_to_arduino(f"MOV:X=0,Y=0,R={-r_svak}")
-                time.sleep(0.2)
-        
-                d3 = ir_sensor_data["D3"]
-                d4 = ir_sensor_data["D4"]
-                if MIN <= d3 <= MAX or MIN <= d4 <= MAX:
-                    linje_status = "Linje gjenfunnet (venstre rotasjon)"
-                    break
-        
-            else:
-                # Søk mot høyre i 4 sek
+        if not (d1_høy or d3_høy or d4_høy or d6_høy):
+                send_to_arduino("MOV:X=0,Y=0,R=0")
+                linje_status = "Mistet linje – søker med rotasjon"
+            
+                # Søk rotasjon mot venstre i 2 sek
                 søk_start = time.time()
-                while time.time() - søk_start < 4:
-                    send_to_arduino(f"MOV:X=0,Y=0,R={r_svak}")
+                while time.time() - søk_start < 2:
+                    send_to_arduino(f"MOV:X=0,Y=0,R={-r_svak}")
                     time.sleep(0.2)
-        
+            
                     d3 = ir_sensor_data["D3"]
                     d4 = ir_sensor_data["D4"]
                     if MIN <= d3 <= MAX or MIN <= d4 <= MAX:
-                        linje_status = "Linje gjenfunnet (høyre rotasjon)"
+                        linje_status = "Linje gjenfunnet (venstre rotasjon)"
                         break
-        
+            
                 else:
-                    # Siste forsøk: roter mot venstre i 2 sek
+                    # Søk mot høyre i 4 sek
                     søk_start = time.time()
-                    while time.time() - søk_start < 2:
-                        send_to_arduino(f"MOV:X=0,Y=0,R={-r_svak}")
+                    while time.time() - søk_start < 4:
+                        send_to_arduino(f"MOV:X=0,Y=0,R={r_svak}")
                         time.sleep(0.2)
-        
+            
                         d3 = ir_sensor_data["D3"]
                         d4 = ir_sensor_data["D4"]
                         if MIN <= d3 <= MAX or MIN <= d4 <= MAX:
-                            linje_status = "Linje gjenfunnet (venstre avsluttende)"
+                            linje_status = "Linje gjenfunnet (høyre rotasjon)"
                             break
+            
                     else:
-                        send_to_arduino("MOV:X=0,Y=0,R=0")
-                        linje_status = "Linje tapt etter rotasjonssøk"
-                        navigasjon_aktiv = False
-                        break
-                        
+                        # Siste forsøk: roter mot venstre i 2 sek
+                        søk_start = time.time()
+                        while time.time() - søk_start < 2:
+                            send_to_arduino(f"MOV:X=0,Y=0,R={-r_svak}")
+                            time.sleep(0.2)
+            
+                            d3 = ir_sensor_data["D3"]
+                            d4 = ir_sensor_data["D4"]
+                            if MIN <= d3 <= MAX or MIN <= d4 <= MAX:
+                                linje_status = "Linje gjenfunnet (venstre avsluttende)"
+                                break
+                        else:
+                            send_to_arduino("MOV:X=0,Y=0,R=0")
+                            linje_status = "Linje tapt etter rotasjonssøk"
+                            navigasjon_aktiv = False
+                            break
+                            
         time.sleep(0.2)
 
         
