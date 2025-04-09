@@ -24,24 +24,19 @@ def start_lidar():
     try:
         lidar = RPLidar(lidar_port)
         print("[LIDAR] Starter oppdateringsloop...")
-        sektorer = [None] * 72
-        for measurement in lidar.iter_measurements():
-            try:
-                quality, angle, dist, _ = measurement
+        for scan in lidar.iter_scans(max_buf_meas=1000):
+            sektorer = [None] * 72
+            for (_, angle, dist, _) in scan:
                 if 0 < dist < 4000:
                     index = int(angle // 5) % 72
                     if sektorer[index] is None or dist < sektorer[index]:
                         sektorer[index] = int(dist)
-
-                # Når en runde er fullført (vinkel går over 360 og starter på nytt)
-                if index == 0 and any(sektorer):
-                    lidar_data_history.insert(0, sektorer.copy())
-                    if len(lidar_data_history) > MAX_HISTORIKK:
-                        lidar_data_history.pop()
-                    print(f"[LIDAR] Fullført runde med {sum(1 for s in sektorer if s)} sektorer.")
-                    sektorer = [None] * 72
-            except Exception as e:
-                print(f"[LIDAR-UNPACK-FEIL] {e}")
+            antall = sum(1 for s in sektorer if s)
+            if antall >= 30:  # bare lagre "nyttig" runde
+                lidar_data_history.insert(0, sektorer)
+                if len(lidar_data_history) > MAX_HISTORIKK:
+                    lidar_data_history.pop()
+                print(f"[LIDAR] Lagret runde med {antall} sektorer.")
     except Exception as e:
         print(f"[LIDAR-FEIL] {e}")
 
