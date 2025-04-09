@@ -50,8 +50,8 @@ except Exception as e:
 siste_aktiv_kommando = ""
 sensor_data = {"left": 0.0, "mid": 0.0, "right": 0.0}
 ir_sensor_data = {"D1": 0, "D3": 0, "D4": 0, "D6": 0}
-battery_level = 78         # i prosent
-battery_voltage = 15.0     # i volt
+battery_level = 0         # i prosent
+battery_voltage = 0     # i volt
 linje_status = "Søker etter linje"
 navigasjon_aktiv = False
 
@@ -136,8 +136,8 @@ def linjenavigasjon():
 
     # Hent innstillinger
     fart = sensor_settings.get("linje_fart", 0.4)
-    r_svak = sensor_settings.get("rotasjon_svak", 5)
-    r_sterk = sensor_settings.get("rotasjon_sterk", 15)
+    r_svak = sensor_settings.get("rotasjon_svak", 1)
+    r_sterk = sensor_settings.get("rotasjon_sterk", 2)
     bruk_y = sensor_settings.get("bruk_y_retning", False)
 
     start_tid = time.time()
@@ -177,11 +177,11 @@ def linjenavigasjon():
             kommando = f"MOV:X={fart},Y=0,R={-r_svak}"
             linje_status = "Lett venstre"
 
-        elif d1_høy and not (d3_høy or d4_høy):
+        elif d1_høy and not d3_høy:
             kommando = f"MOV:X={fart},Y=0,R={r_sterk}"
             linje_status = "Kraftig høyre"
 
-        elif d6_høy and not (d3_høy or d4_høy):
+        elif d6_høy and not d4_høy:
             kommando = f"MOV:X={fart},Y=0,R={-r_sterk}"
             linje_status = "Kraftig venstre"
 
