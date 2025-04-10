@@ -24,7 +24,7 @@ def start_lidar():
     try:
         from rplidar import RPLidar
         lidar = RPLidar(lidar_port)
-        lidar.clear_input()
+        lidar.clean_input()
         print("[LIDAR] Starter oppdateringsloop...")
 
         sektorer = [None] * 72
