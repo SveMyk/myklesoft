@@ -19,11 +19,6 @@ MAX_HISTORIKK = 5
 lidar = None
 lidar_port = "/dev/ttyUSB0"  # Endre hvis nødvendig
 
-lidar_data_history = []  # 72 sektorer x 5 runder
-MAX_HISTORIKK = 5
-lidar = None
-lidar_port = "/dev/ttyUSB0"  # Endre hvis nødvendig
-
 def start_lidar():
     global lidar, lidar_data_history
     try:
@@ -31,27 +26,24 @@ def start_lidar():
         lidar = RPLidar(lidar_port)
         print("[LIDAR] Starter oppdateringsloop...")
 
-        for scan in lidar.iter_scans(max_buf_meas=3000):
-            sektorer = [None] * 72
-            for m in scan:
-                try:
-                    angle = m[1]
-                    dist = m[2]
-                    if 0 < dist < 4000:
-                        index = int(angle // 5) % 72
-                        if sektorer[index] is None or dist < sektorer[index]:
-                            sektorer[index] = int(dist)
-                except Exception as e:
-                    print(f"[LIDAR-UNPACK-FEIL] {e}")
+        sektorer = [None] * 72
+        for _, angle, dist in lidar.iter_measures():
+            try:
+                if 0 < dist < 4000:
+                    index = int(angle // 5) % 72
+                    if sektorer[index] is None or dist < sektorer[index]:
+                        sektorer[index] = int(dist)
+            except Exception as e:
+                print(f"[LIDAR-UNPACK-FEIL] {e}")
+                continue
 
-            antall = sum(1 for s in sektorer if s)
-            if antall >= 30:
-                lidar_data_history.insert(0, sektorer)
+            # Når vi har målinger i minst 30 sektorer → lagre runde
+            if sum(1 for s in sektorer if s) >= 30:
+                lidar_data_history.insert(0, sektorer.copy())
                 if len(lidar_data_history) > MAX_HISTORIKK:
                     lidar_data_history.pop()
-                print(f"[LIDAR] Lagret runde med {antall} sektorer.")
-            else:
-                print(f"[LIDAR] Runde ignorert (kun {antall} sektorer)")
+                print(f"[LIDAR] Lagret runde med {sum(1 for s in sektorer if s)} sektorer.")
+                sektorer = [None] * 72  # start ny runde
 
     except Exception as e:
         print(f"[LIDAR-FEIL] {e}")
@@ -60,8 +52,6 @@ def start_lidar():
             lidar.disconnect()
         except:
             pass
-
-
 
 def load_settings():
     try:
