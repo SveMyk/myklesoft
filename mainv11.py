@@ -278,19 +278,20 @@ def autonom_navigasjon():
             time.sleep(0.3)
             continue
 
-        # Beregn frastøtningsstyrke
+        # Frastøtningsstyrker
         styrke_venstre = max(0, MAX_DIST - left)
         styrke_høyre = max(0, MAX_DIST - right)
-
-        # Forskjellen mellom sidene gir rotasjonsimpuls
         rotasjonskraft = styrke_venstre - styrke_høyre
-
-        # Skalér rotasjonskraft til -30 til +30 grader
         rotasjonsgrad = int(max(-30, min(30, rotasjonskraft)))
 
-        # Kjør fremover med justert retning
-        send_to_arduino(f"MOV:X=1,Y=0,R={rotasjonsgrad}")
-        autonom_status = f"Vektorstyrt bevegelse (R={rotasjonsgrad})"
+        # Justér X-hastighet proporsjonalt
+        r_abs = abs(rotasjonsgrad)
+        x_hastighet = round(1.0 - 0.8 * (r_abs / 30), 2)  # skaler fra 1.0 til 0.2
+        x_hastighet = max(0.2, x_hastighet)  # sikkerhetsgrense
+
+        # Send bevegelse
+        send_to_arduino(f"MOV:X={x_hastighet},Y=0,R={rotasjonsgrad}")
+        autonom_status = f"X={x_hastighet}, R={rotasjonsgrad}"
 
         time.sleep(0.2)
         
