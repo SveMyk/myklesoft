@@ -27,16 +27,22 @@ def start_lidar():
         print("[LIDAR] Starter oppdateringsloop...")
 
         current_points = []
+
         for i, (quality, angle, distance) in enumerate(lidar.iter_measures()):
             if 0 < distance < 4000:
                 current_points.append([angle, distance])
 
-            if i > 100:  # juster etter behov
-                if len(current_points) > 10:
+            if i > 200:  # juster for hvor ofte du vil lagre (høyere = sjeldnere)
+                if len(current_points) >= 20:  # minimum for å lagre en runde
                     lidar_raw_history.insert(0, current_points.copy())
                     if len(lidar_raw_history) > 10:
                         lidar_raw_history.pop()
+                    print(f"[LIDAR] Lagret runde med {len(current_points)} punkt.")
+                else:
+                    print(f"[LIDAR] Runde ignorert ({len(current_points)} punkt)")
                 current_points.clear()
+                i = 0  # reset teller manuelt
+
     except Exception as e:
         print(f"[LIDAR-FEIL] {e}")
         try:
@@ -44,8 +50,6 @@ def start_lidar():
             lidar.disconnect()
         except:
             pass
-
-
 
 def load_settings():
     try:
