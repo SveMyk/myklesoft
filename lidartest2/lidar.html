@@ -57,7 +57,6 @@
   <h1>LIDAR Visning</h1>
 
   <svg id="lidarCanvas" viewBox="-250 -250 500 500" width="500" height="500">
-    <!-- Sirkler for referanse -->
     <circle cx="0" cy="0" r="50" stroke="#ccc" fill="none"/>
     <circle cx="0" cy="0" r="100" stroke="#ccc" fill="none"/>
     <circle cx="0" cy="0" r="150" stroke="#ccc" fill="none"/>
@@ -81,29 +80,29 @@
         .then(res => res.json())
         .then(data => {
           const canvas = document.getElementById("lidarCanvas");
-          // Fjern tidligere punkter
           canvas.querySelectorAll(".dot").forEach(e => e.remove());
 
           const historikk = data.scan;
           const antallRunder = historikk.length;
 
           for (let runde = antallRunder - 1; runde >= 0; runde--) {
-            const farge = `rgba(0, 0, 255, ${1 - runde * 0.2})`;  // blå med fading
             const sektorer = historikk[runde];
+            const opacity = 1 - runde * 0.2;
 
             for (let i = 0; i < sektorer.length; i++) {
               const dist = sektorer[i];
-              if (dist) {
-                const vinkel = i * 5;
-                const pos = polarToXY(vinkel, dist * 0.5); // skaler avstand
-                const sirkel = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                sirkel.setAttribute("cx", pos.x.toFixed(1));
-                sirkel.setAttribute("cy", pos.y.toFixed(1));
-                sirkel.setAttribute("r", 3);
-                sirkel.setAttribute("fill", farge);
-                sirkel.classList.add("dot");
-                canvas.appendChild(sirkel);
-              }
+              const vinkel = i * 5;
+              let radius = dist ? dist * 0.5 : 5;  // 0.5 skalering eller liten radius
+              let farge = dist ? `rgba(0, 0, 255, ${opacity})` : `rgba(200,200,200,0.3)`;
+
+              const pos = polarToXY(vinkel, radius);
+              const sirkel = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+              sirkel.setAttribute("cx", pos.x.toFixed(1));
+              sirkel.setAttribute("cy", pos.y.toFixed(1));
+              sirkel.setAttribute("r", dist ? 3 : 1.5);
+              sirkel.setAttribute("fill", farge);
+              sirkel.classList.add("dot");
+              canvas.appendChild(sirkel);
             }
           }
         });
