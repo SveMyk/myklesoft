@@ -90,12 +90,12 @@
             const opacity = 1 - runde * 0.1;
             const farge = `rgba(0, 0, 255, ${opacity})`;
 
-            punkter.forEach(([angle, dist]) => {
+            punkter.forEach(([dist, angle]) => {
               const pos = polarToXY(angle, dist * 0.5);
               const sirkel = document.createElementNS("http://www.w3.org/2000/svg", "circle");
               sirkel.setAttribute("cx", pos.x.toFixed(1));
               sirkel.setAttribute("cy", pos.y.toFixed(1));
-              sirkel.setAttribute("r", 2.5);
+              sirkel.setAttribute("r", 5.0);
               sirkel.setAttribute("fill", farge);
               sirkel.classList.add("dot");
               canvas.appendChild(sirkel);
