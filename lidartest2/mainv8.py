@@ -22,28 +22,34 @@ lidar_port = "/dev/ttyUSB0"  # Endre hvis nødvendig
 def start_lidar():
     global lidar, lidar_data_history
     try:
-        from rplidar import RPLidar  # lokal import for sikkerhet
+        from rplidar import RPLidar  # Lokal import for sikkerhet
         lidar = RPLidar(lidar_port)
         print("[LIDAR] Starter oppdateringsloop...")
 
+        # Start med en tom liste over 72 sektorer
         sektorer = [None] * 72
-        for _, angle, dist in lidar.iter_measures():
+
+        # Bruk iter_measures() for å hente råmålinger fortløpende.
+        for new_scan, quality, angle, dist in lidar.iter_measures():
             try:
                 if 0 < dist < 4000:
                     index = int(angle // 5) % 72
+                    # Lagre minimum avstand per sektor
                     if sektorer[index] is None or dist < sektorer[index]:
                         sektorer[index] = int(dist)
             except Exception as e:
                 print(f"[LIDAR-UNPACK-FEIL] {e}")
                 continue
 
-            # Når vi har målinger i minst 30 sektorer → lagre runde
+            # Når vi har samlet tilstrekkelig med data i denne "runden" (minst 30 sektorer)
             if sum(1 for s in sektorer if s) >= 30:
+                # Lagre en kopi av den nåværende runden i historikken
                 lidar_data_history.insert(0, sektorer.copy())
                 if len(lidar_data_history) > MAX_HISTORIKK:
                     lidar_data_history.pop()
                 print(f"[LIDAR] Lagret runde med {sum(1 for s in sektorer if s)} sektorer.")
-                sektorer = [None] * 72  # start ny runde
+                # Nullstill sektorliste for neste runde
+                sektorer = [None] * 72
 
     except Exception as e:
         print(f"[LIDAR-FEIL] {e}")
@@ -52,6 +58,8 @@ def start_lidar():
             lidar.disconnect()
         except:
             pass
+
+
 
 def load_settings():
     try:
