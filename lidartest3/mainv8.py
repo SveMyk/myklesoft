@@ -446,6 +446,7 @@ def lidar_view():
     return render_template("lidar.html")
 
 if __name__ == "__main__":
+    threading.Thread(target=start_lidar, daemon=True).start()
     threading.Thread(target=update_sensor_data, daemon=True).start()
     threading.Thread(target=read_serial_from_arduino, daemon=True).start()
     threading.Thread(target=overvåk_for_hindring, daemon=True).start() 
