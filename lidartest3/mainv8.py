@@ -26,23 +26,17 @@ def start_lidar():
         lidar = RPLidar(lidar_port)
         print("[LIDAR] Starter oppdateringsloop...")
 
-        måling = []  # Nåværende runde
+        current_points = []
+        for i, (quality, angle, distance) in enumerate(lidar.iter_measures()):
+            if 0 < distance < 4000:
+                current_points.append([angle, distance])
 
-        for m in lidar.iter_measures(max_buf_meas=3000):
-            try:
-                quality, angle, dist = m[0], m[1], m[2]
-                if 0 < dist < 4000:
-                    måling.append((angle, dist))
-                if m[3]:  # Startbit = ny runde
-                    if len(måling) > 10:
-                        lidar_raw_history.insert(0, måling.copy())
-                        if len(lidar_raw_history) > MAX_RAW_HISTORY:
-                            lidar_raw_history.pop()
-                        print(f"[LIDAR] Lagret runde med {len(måling)} punkter.")
-                    måling.clear()
-            except Exception as e:
-                print(f"[LIDAR-FEIL] {e}")
-
+            if i > 100:  # juster etter behov
+                if len(current_points) > 10:
+                    lidar_raw_history.insert(0, current_points.copy())
+                    if len(lidar_raw_history) > 10:
+                        lidar_raw_history.pop()
+                current_points.clear()
     except Exception as e:
         print(f"[LIDAR-FEIL] {e}")
         try:
