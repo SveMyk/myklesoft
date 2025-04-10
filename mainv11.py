@@ -263,33 +263,48 @@ def autonom_navigasjon():
     autonom_aktiv = True
     autonom_status = "Autonom kjøring aktivert (vektorstyrt)"
 
-    MAX_DIST = 60   # cm – alt over dette regnes som "åpent"
-    MIN_DIST = 15   # cm – alt under dette utløser nødbrems
+    MAX_DIST = 60
+    MIN_DIST = 15
 
     while autonom_aktiv:
         left = sensor_data["left"]
         mid = sensor_data["mid"]
         right = sensor_data["right"]
 
-        # Nødbrems
+        # Nødbrems og løsrivning
         if mid < MIN_DIST or (left < MIN_DIST and right < MIN_DIST):
             send_to_arduino("MOV:X=0,Y=0,R=0")
             autonom_status = "Nødbrems – hindring for nær"
+            print("[AUTONOM] Hindring – starter løsrivning")
             time.sleep(0.3)
-            continue
 
-        # Frastøtningsstyrker
+            # Start rotasjon for å frigjøre roboten
+            while autonom_aktiv:
+                send_to_arduino("MOV:X=0,Y=0,R=20")
+                time.sleep(0.4)
+
+                left = sensor_data["left"]
+                mid = sensor_data["mid"]
+                right = sensor_data["right"]
+
+                klare = sum(1 for v in [left, mid, right] if v > 40)
+                if klare >= 2 and min(left, mid, right) > 20:
+                    autonom_status = "Løsrivning ferdig – fortsetter"
+                    print("[AUTONOM] Løsrivning vellykket")
+                    break
+
+            continue  # hopp tilbake til ny vurdering
+
+        # Vektorstyrt unngåelse
         styrke_venstre = max(0, MAX_DIST - left)
         styrke_høyre = max(0, MAX_DIST - right)
         rotasjonskraft = styrke_venstre - styrke_høyre
         rotasjonsgrad = int(max(-30, min(30, rotasjonskraft)))
 
-        # Justér X-hastighet proporsjonalt
         r_abs = abs(rotasjonsgrad)
-        x_hastighet = round(1.0 - 0.8 * (r_abs / 30), 2)  # skaler fra 1.0 til 0.2
-        x_hastighet = max(0.2, x_hastighet)  # sikkerhetsgrense
+        x_hastighet = round(1.0 - 0.8 * (r_abs / 30), 2)
+        x_hastighet = max(0.2, x_hastighet)
 
-        # Send bevegelse
         send_to_arduino(f"MOV:X={x_hastighet},Y=0,R={rotasjonsgrad}")
         autonom_status = f"X={x_hastighet}, R={rotasjonsgrad}"
 
