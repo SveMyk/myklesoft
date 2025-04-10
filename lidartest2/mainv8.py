@@ -31,7 +31,7 @@ def start_lidar():
         lidar = RPLidar(lidar_port)
         print("[LIDAR] Starter oppdateringsloop...")
 
-        for scan in lidar.iter_scans(max_buf_meas=1000):
+        for scan in lidar.iter_scans(max_buf_meas=3000):
             sektorer = [None] * 72
             for m in scan:
                 try:
