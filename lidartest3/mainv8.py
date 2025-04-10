@@ -23,32 +23,33 @@ def start_lidar():
     global lidar, lidar_raw_history
     try:
         from rplidar import RPLidar
-        lidar = RPLidar("/dev/ttyUSB0")  # <-- Oppdater her!
+        lidar = RPLidar(lidar_port)
         print("[LIDAR] Starter oppdateringsloop...")
+        lidar.clean_input()
+        lidar.start_motor()
+        time.sleep(1)
+        lidar.start()  # starter SCAN
 
         current_points = []
-
-        for i, (_, _, angle, distance) in enumerate(lidar.iter_measures()):
+        for new_scan, quality, angle, distance in lidar.iter_measures():
             if 0 < distance < 4000:
-                current_points.append([angle, distance])
+                current_points.append([distance, angle])  # Merk: [dist, angle]
 
-            if i > 200:
-                if len(current_points) >= 20:
-                    lidar_raw_history.insert(0, current_points.copy())
-                    if len(lidar_raw_history) > 10:
-                        lidar_raw_history.pop()
-                    print(f"[LIDAR] Lagret runde med {len(current_points)} punkt.")
-                else:
-                    print(f"[LIDAR] Runde ignorert ({len(current_points)} punkt)")
+            if new_scan and len(current_points) >= 20:
+                lidar_raw_history.insert(0, current_points.copy())
+                if len(lidar_raw_history) > MAX_RAW_HISTORY:
+                    lidar_raw_history.pop()
+                print(f"[LIDAR] Lagret runde med {len(current_points)} punkt.")
                 current_points.clear()
 
     except Exception as e:
         print(f"[LIDAR-FEIL] {e}")
         try:
             lidar.stop()
+            lidar.stop_motor()
             lidar.disconnect()
-        except:
-            pass
+        except Exception as stop_err:
+            print(f"[LIDAR-STOP-FEIL] {stop_err}")
 
 def load_settings():
     try:
