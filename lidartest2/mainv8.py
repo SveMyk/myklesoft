@@ -24,27 +24,35 @@ def start_lidar():
     try:
         from rplidar import RPLidar
         lidar = RPLidar(lidar_port)
+        lidar.clear_input()
         print("[LIDAR] Starter oppdateringsloop...")
 
         sektorer = [None] * 72
+        start_tid = time.time()
 
         for new_scan, quality, angle, dist in lidar.iter_measures():
             try:
                 if 0 < dist < 4000 and 0 <= angle < 360:
                     index = int(angle // 5)
-                    if 0 <= index < 72:  # ekstra sikkerhet
-                        if sektorer[index] is None or dist < sektorer[index]:
-                            sektorer[index] = int(dist)
+                    if sektorer[index] is None or dist < sektorer[index]:
+                        sektorer[index] = int(dist)
             except Exception as e:
                 print(f"[LIDAR-UNPACK-FEIL] {e}")
                 continue
 
-            if sum(1 for s in sektorer if s) >= 30:
-                lidar_data_history.insert(0, sektorer.copy())
-                if len(lidar_data_history) > MAX_HISTORIKK:
-                    lidar_data_history.pop()
-                print(f"[LIDAR] Lagret runde med {sum(1 for s in sektorer if s)} sektorer.")
+            # Ferdig med én runde hver 0.5 sekund
+            if time.time() - start_tid >= 0.5:
+                antall = sum(1 for s in sektorer if s)
+                if antall >= 30:
+                    lidar_data_history.insert(0, sektorer.copy())
+                    if len(lidar_data_history) > MAX_HISTORIKK:
+                        lidar_data_history.pop()
+                    print(f"[LIDAR] Lagret runde med {antall} sektorer.")
+                else:
+                    print(f"[LIDAR] Runde ignorert (kun {antall} sektorer)")
+
                 sektorer = [None] * 72
+                start_tid = time.time()
 
     except Exception as e:
         print(f"[LIDAR-FEIL] {e}")
