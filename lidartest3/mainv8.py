@@ -23,17 +23,17 @@ def start_lidar():
     global lidar, lidar_raw_history
     try:
         from rplidar import RPLidar
-        lidar = RPLidar(lidar_port)
+        lidar = RPLidar("/dev/ttyUSB0")  # <-- Oppdater her!
         print("[LIDAR] Starter oppdateringsloop...")
 
         current_points = []
 
-        for i, (quality, angle, distance) in enumerate(lidar.iter_measures()):
+        for i, (_, _, angle, distance) in enumerate(lidar.iter_measures()):
             if 0 < distance < 4000:
                 current_points.append([angle, distance])
 
-            if i > 200:  # juster for hvor ofte du vil lagre (høyere = sjeldnere)
-                if len(current_points) >= 20:  # minimum for å lagre en runde
+            if i > 200:
+                if len(current_points) >= 20:
                     lidar_raw_history.insert(0, current_points.copy())
                     if len(lidar_raw_history) > 10:
                         lidar_raw_history.pop()
@@ -41,7 +41,6 @@ def start_lidar():
                 else:
                     print(f"[LIDAR] Runde ignorert ({len(current_points)} punkt)")
                 current_points.clear()
-                i = 0  # reset teller manuelt
 
     except Exception as e:
         print(f"[LIDAR-FEIL] {e}")
