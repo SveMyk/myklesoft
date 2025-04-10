@@ -24,32 +24,36 @@ def start_lidar():
     try:
         from rplidar import RPLidar
         lidar = RPLidar(lidar_port)
-        print("[LIDAR] Starter oppdateringsloop...")
-        lidar.clean_input()
-        lidar.start_motor()
-        time.sleep(1)
-        lidar.start()  # starter SCAN
+        print("[LIDAR] Startet på port", lidar_port)
 
         current_points = []
-        for new_scan, quality, angle, distance in lidar.iter_measures():
-            if 0 < distance < 4000:
-                current_points.append([distance, angle])  # Merk: [dist, angle]
+        målinger_per_runde = 100  # Juster etter ønsket oppløsning
 
-            if new_scan and len(current_points) >= 20:
+        for i, måling in enumerate(lidar.iter_measures()):
+            if not isinstance(måling, tuple) or len(måling) != 4:
+                print(f"[LIDAR-ADVARSEL] Ugyldig måling: {måling}")
+                continue
+
+            sync, quality, angle, distance = måling
+            if 0 < distance < 4000:
+                current_points.append([angle, distance])
+                print(f"[LIDAR] angle={angle:.1f}, dist={distance:.1f}")
+
+            if len(current_points) >= målinger_per_runde:
                 lidar_raw_history.insert(0, current_points.copy())
-                if len(lidar_raw_history) > MAX_RAW_HISTORY:
+                if len(lidar_raw_history) > 10:
                     lidar_raw_history.pop()
-                print(f"[LIDAR] Lagret runde med {len(current_points)} punkt.")
+                print(f"[LIDAR] Lagret {len(current_points)} punkter.")
                 current_points.clear()
 
     except Exception as e:
         print(f"[LIDAR-FEIL] {e}")
         try:
             lidar.stop()
-            lidar.stop_motor()
             lidar.disconnect()
-        except Exception as stop_err:
-            print(f"[LIDAR-STOP-FEIL] {stop_err}")
+        except Exception as fe:
+            print(f"[LIDAR-FEIL-STOP] {fe}")
+
 
 def load_settings():
     try:
