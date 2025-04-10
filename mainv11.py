@@ -264,14 +264,14 @@ def autonom_navigasjon():
     autonom_status = "Autonom kjøring aktivert (vektorstyrt)"
 
     MAX_DIST = 60
-    MIN_DIST = 15
+    MIN_DIST = 30
 
     while autonom_aktiv:
         left = sensor_data["left"]
         mid = sensor_data["mid"]
         right = sensor_data["right"]
 
-        # Nødbrems og løsrivning
+         # Nødbrems og løsrivning
         if mid < MIN_DIST or (left < MIN_DIST and right < MIN_DIST):
             send_to_arduino("MOV:X=0,Y=0,R=0")
             autonom_status = "Nødbrems – hindring for nær"
@@ -287,8 +287,7 @@ def autonom_navigasjon():
                 mid = sensor_data["mid"]
                 right = sensor_data["right"]
 
-                klare = sum(1 for v in [left, mid, right] if v > 40)
-                if klare >= 2 and min(left, mid, right) > 20:
+                if left > 40 and mid > 40 and right > 40:
                     autonom_status = "Løsrivning ferdig – fortsetter"
                     print("[AUTONOM] Løsrivning vellykket")
                     break
