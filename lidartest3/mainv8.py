@@ -14,45 +14,34 @@ settings_file = "sensor_settings.json"
 autonom_aktiv = False
 autonom_status = "Venter på start"
 
-lidar_data_history = []  # 72 sektorer x 5 runder
-MAX_HISTORIKK = 5
+lidar_raw_history = []  # Liste med 10 runder, hver inneholder [(vinkel, distanse)]
+MAX_RAW_HISTORY = 10
 lidar = None
 lidar_port = "/dev/ttyUSB0"  # Endre hvis nødvendig
 
 def start_lidar():
-    global lidar, lidar_data_history
+    global lidar, lidar_raw_history
     try:
         from rplidar import RPLidar
         lidar = RPLidar(lidar_port)
-        lidar.clean_input()
         print("[LIDAR] Starter oppdateringsloop...")
 
-        sektorer = [None] * 72
-        start_tid = time.time()
+        måling = []  # Nåværende runde
 
-        for new_scan, quality, angle, dist in lidar.iter_measures():
+        for m in lidar.iter_measures(max_buf_meas=3000):
             try:
-                if 0 < dist < 4000 and 0 <= angle < 360:
-                    index = int(angle // 5)
-                    if sektorer[index] is None or dist < sektorer[index]:
-                        sektorer[index] = int(dist)
+                quality, angle, dist = m[0], m[1], m[2]
+                if 0 < dist < 4000:
+                    måling.append((angle, dist))
+                if m[3]:  # Startbit = ny runde
+                    if len(måling) > 10:
+                        lidar_raw_history.insert(0, måling.copy())
+                        if len(lidar_raw_history) > MAX_RAW_HISTORY:
+                            lidar_raw_history.pop()
+                        print(f"[LIDAR] Lagret runde med {len(måling)} punkter.")
+                    måling.clear()
             except Exception as e:
-                print(f"[LIDAR-UNPACK-FEIL] {e}")
-                continue
-
-            # Ferdig med én runde hver 0.5 sekund
-            if time.time() - start_tid >= 0.5:
-                antall = sum(1 for s in sektorer if s)
-                if antall >= 30:
-                    lidar_data_history.insert(0, sektorer.copy())
-                    if len(lidar_data_history) > MAX_HISTORIKK:
-                        lidar_data_history.pop()
-                    print(f"[LIDAR] Lagret runde med {antall} sektorer.")
-                else:
-                    print(f"[LIDAR] Runde ignorert (kun {antall} sektorer)")
-
-                sektorer = [None] * 72
-                start_tid = time.time()
+                print(f"[LIDAR-FEIL] {e}")
 
     except Exception as e:
         print(f"[LIDAR-FEIL] {e}")
@@ -449,10 +438,8 @@ def get_autonom_status():
 
 @app.route("/lidar_data")
 def lidar_data():
-    global lidar
-    if lidar is None:
-        threading.Thread(target=start_lidar, daemon=True).start()
-    return jsonify({"scan": lidar_data_history})
+    global lidar_raw_history
+    return jsonify({"points": lidar_raw_history})
 
 @app.route("/lidar")
 def lidar_view():
