@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GASSO - Autonom Kjøring</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0; padding: 0;
+      background-color: #f4f4f4;
+      text-align: center;
+    }
+    header {
+      background-color: #00cfe8;
+      padding: 20px;
+    }
+    header img {
+      height: 180px;
+    }
+    .battery {
+      margin-top: 10px;
+      font-size: 1.1rem;
+      color: #003366;
+    }
+    h1 {
+      margin-top: 30px;
+      color: #003366;
+    }
+    .btn {
+      margin: 20px 10px;
+      padding: 12px 25px;
+      font-size: 1.1rem;
+      background-color: #003366;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #005f99;
+    }
+    #statusBox {
+      margin: 30px auto;
+      padding: 15px;
+      font-size: 1.2rem;
+      background-color: #003366;
+      color: white;
+      border-radius: 10px;
+      max-width: 400px;
+    }
+    .sensor-data {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 40px;
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .sensor-bar {
+      width: 30px;
+      height: 120px;
+      margin: auto;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .bar {
+      width: 100%;
+      border-radius: 6px;
+    }
+    .sensor-block {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="/static/gasso_logo.png" alt="GASSO Logo" />
+    <div class="battery">Batteristatus: <span id="batteryLevel">--%</span></div>
+  </header>
+
+  <h1>Autonom Kjøring (Rotasjonsbasert)</h1>
+
+  <div id="statusBox">
+    Status: <span id="statusText">Ikke aktiv</span>
+  </div>
+
+  <div class="sensor-data">
+    <div class="sensor-block">
+      <div id="leftBar" class="sensor-bar">
+        <div class="bar" style="height:10px; background:#ccc"></div>
+      </div>
+      <div id="leftLabel">Venstre: -- cm</div>
+    </div>
+    <div class="sensor-block">
+      <div id="midBar" class="sensor-bar">
+        <div class="bar" style="height:10px; background:#ccc"></div>
+      </div>
+      <div id="midLabel">Midt: -- cm</div>
+    </div>
+    <div class="sensor-block">
+      <div id="rightBar" class="sensor-bar">
+        <div class="bar" style="height:10px; background:#ccc"></div>
+      </div>
+      <div id="rightLabel">Høyre: -- cm</div>
+    </div>
+  </div>
+
+  <div>
+    <button class="btn" onclick="startAutonom()">Start Autonom</button>
+    <button class="btn" onclick="stopAutonom()">Stopp Autonom</button>
+  </div>
+  <div>
+    <button class="btn" onclick="location.href='/'">Tilbake til hovedmeny</button>
+  </div>
+
+  <script>
+    function startAutonom() {
+      fetch("/start_autonom");
+    }
+
+    function stopAutonom() {
+      fetch("/stop_autonom");
+    }
+
+    function updateStatus() {
+      fetch("/autonom_status")
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("statusText").innerText = data.status;
+        });
+    }
+
+    function updateSensors() {
+      fetch("/sensors")
+        .then(res => res.json())
+        .then(data => {
+          ["left", "mid", "right"].forEach(id => {
+            const cm = data[id];
+            let color = "#4caf50";
+            if (cm <= 30) color = "#e53935";
+            else if (cm <= 60) color = "#fbc02d";
+            const height = Math.min(cm * 2, 100);
+            const bar = document.querySelector(`#${id}Bar .bar`);
+            bar.style.height = height + "px";
+            bar.style.backgroundColor = color;
+            document.getElementById(`${id}Label`).innerText =
+              (id === "left" ? "Venstre" : id === "right" ? "Høyre" : "Midt") +
+              ": " + cm + " cm";
+          });
+        });
+    }
+
+    function fetchBattery() {
+      fetch("/battery")
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("batteryLevel").innerText = data.level + "%";
+        });
+    }
+
+    fetchBattery();
+    updateStatus();
+    updateSensors();
+    setInterval(updateStatus, 1000);
+    setInterval(updateSensors, 1000);
+    setInterval(fetchBattery, 30000);
+  </script>
+</body>
+</html>
