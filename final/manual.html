@@ -144,9 +144,6 @@
     </div>
   </div>
 
-  <button class="btn-back" onclick="location.href='/'">Tilbake</button>
-  <button class="btn-back" onclick="location.href='/settings'">Sensorinnstillinger</button>
-
   <script>
     let settings = { ultra_reduce: 40, ultra_threshold: 20 };
 
@@ -162,9 +159,9 @@
 
         // Batteriindikator farge
         const batteryEl = document.getElementById('batteryLevel');
-        if (level < 20) batteryEl.style.color = "#e53935"; // Rød
-        else if (level < 50) batteryEl.style.color = "#fbc02d"; // Gul
-        else batteryEl.style.color = "#003366"; // Blå
+        if (level < 20) batteryEl.style.color = "#e53935";
+        else if (level < 50) batteryEl.style.color = "#fbc02d";
+        else batteryEl.style.color = "#003366";
       } catch {
         document.getElementById('batteryLevel').innerText = 'Ukjent';
       }
@@ -218,5 +215,8 @@
     setInterval(fetchSensors, 300);
     setInterval(fetchBattery, 10000);
   </script>
+
+  <!-- Flyttet knapp til slutt -->
+  <button class="btn-back" onclick="location.href='/'">Tilbake til hovedmeny</button>
 </body>
 </html>
