@@ -2,7 +2,7 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8">
-  <title>GASSO – LIDAR Visning</title>
+  <title>GASSO – LIDAR Visning (Demo)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
@@ -90,7 +90,17 @@
       const demoPoints = [];
       for (let i = 0; i < 72; i++) {
         const angle = i * 5;
-        const dist = 100 + 50 * Math.sin(i * Math.PI / 18); // bølgeform for demo
+        let dist;
+
+        // Simulert rom: åpen bak, vegger foran og på siden
+        if (angle >= 150 && angle <= 210) {
+          dist = 180 + Math.random() * 20; // Åpen bak
+        } else if ((angle >= 60 && angle <= 120) || (angle >= 240 && angle <= 300)) {
+          dist = 100 + Math.random() * 20; // Sider
+        } else {
+          dist = 60 + Math.random() * 10; // Vegger foran og bak
+        }
+
         demoPoints.push([dist, angle]);
       }
 
@@ -113,17 +123,6 @@
           document.getElementById("batteryLevel").innerText = data.level + "%";
         });
     }
-
-    // Ekte data hentes her når klart:
-    /*
-    function updateLidar() {
-      fetch("/lidar_data")
-        .then(res => res.json())
-        .then(data => {
-          // Implementeres når LIDAR fungerer tilfredstillende
-        });
-    }
-    */
 
     fetchBattery();
     updateLidarDemo();
