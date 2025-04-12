@@ -150,12 +150,24 @@
 <div class="status-box status-yellow" id="statusBox">Søker etter linje...</div>
 
 <button class="btn-back" onclick="location.href='/'">Tilbake til hovedmeny</button>
+<button class="btn-back" onclick="location.href='/settings'">Sensorinnstillinger</button>
 
 <script>
   function irToGray(val) {
     val = Math.min(1023, Math.max(0, val));
     const gray = 255 - Math.floor((val / 1023) * 255);
     return `rgb(${gray}, ${gray}, ${gray})`;
+  }
+
+  async function loadIRSettings() {
+    try {
+      const res = await fetch('/settings_data');
+      const data = await res.json();
+      document.getElementById("minValue").value = data.ir_min;
+      document.getElementById("maxValue").value = data.ir_max;
+    } catch (e) {
+      console.error("Feil ved henting av IR-innstillinger:", e);
+    }
   }
 
   async function fetchIRData() {
@@ -231,6 +243,8 @@
   setInterval(fetchIRData, 200);
   setInterval(fetchStatus, 1000);
   setInterval(fetchBattery, 10000);
+
+  loadIRSettings();
   fetchIRData();
   fetchStatus();
   fetchBattery();
